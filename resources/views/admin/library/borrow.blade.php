@@ -1,0 +1,79 @@
+@extends('layouts.admin')
+
+@section('title', 'Quản lý Mượn trả')
+@section('page_title', 'QUẢN LÝ GIAO DỊCH MƯỢN TRẢ TÀI LIỆU')
+
+@section('content')
+<div class="card card-custom bg-white p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold m-0 text-dark"><i class="bi bi-list-check me-2"></i>DANH SÁCH MƯỢN TRẢ</h6>
+        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#newBorrowModal"><i class="bi bi-plus-circle me-1"></i>Tạo Phiếu Mượn</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0 fs-7">
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Mã GD</th>
+                    <th>MSSV</th>
+                    <th>Mã sách</th>
+                    <th>Ngày mượn</th>
+                    <th>Ngày trả thực tế</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($borrowList as $b)
+                    <tr>
+                        <td class="fw-bold text-center text-primary">{{ $b->ma_giao_dich }}</td>
+                        <td class="text-center">{{ $b->mssv }}</td>
+                        <td>{{ $b->taiLieu->nhan_de ?? $b->ma_tai_lieu }}</td>
+                        <td class="text-center">{{ date('d/m/Y H:i', strtotime($b->ngay_muon)) }}</td>
+                        <td class="text-center">{{ $b->ngay_tra ? date('d/m/Y H:i', strtotime($b->ngay_tra)) : '-' }}</td>
+                        <td class="text-center">
+                            @if($b->trang_thai === 'DaTra')
+                                <span class="badge bg-success">Đã trả</span>
+                            @else
+                                <span class="badge bg-warning text-dark">Đang mượn</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($b->trang_thai !== 'DaTra')
+                                <form action="{{ route('admin.library.borrow.return', $b->ma_giao_dich) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2"><i class="bi bi-check2-circle"></i> Xác nhận trả</button>
+                                </form>
+                            @else
+                                <span class="text-muted fs-8">Hoàn tất</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="text-center text-muted">Chưa có bản ghi mượn trả nào.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">{{ $borrowList->links() }}</div>
+</div>
+
+<!-- Modal tạo phiếu mượn -->
+<div class="modal fade" id="newBorrowModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('admin.library.borrow.store') }}" method="POST">
+                @csrf
+                <div class="modal-header"><h5 class="modal-title fw-bold">TẠO PHIẾU MƯỢN MỚI</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body fs-7">
+                    <div class="mb-3"><label class="form-label">Mã số sinh viên (MSSV) (*):</label><input type="text" name="mssv" class="form-control form-control-sm" required></div>
+                    <div class="mb-3"><label class="form-label">Mã tài liệu sách (*):</label><input type="text" name="ma_tai_lieu" class="form-control form-control-sm" required></div>
+                    <div class="mb-3"><label class="form-label">Ghi chú:</label><textarea name="ghi_chu" class="form-control form-control-sm" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-sm btn-primary">Xác nhận Mượn</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
