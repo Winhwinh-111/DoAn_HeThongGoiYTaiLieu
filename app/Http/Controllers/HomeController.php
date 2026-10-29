@@ -63,6 +63,19 @@ class HomeController extends Controller
                 $recommendedBooks = $this->recommendationService->getRecommendationsForStudent($mssv, 8, 0.01);
             }
         }
+        if (Session::has('user_id') && Session::get('role') === 'SinhVien') {
+            $mssv = Session::get('mssv');
+            $sinhVien = SinhVien::find($mssv);
+            $markedBookIds = DanhDau::where('mssv', $mssv)->pluck('ma_tai_lieu')->toArray();
+
+            if ($sinhVien) {
+                $hasActiveCourses = $sinhVien->hocPhans()->where('trang_thai', 'DangHoc')->exists();
+                $isSuggestedByMajor = !$hasActiveCourses;
+
+                // Tự động dùng tham số Top-N và Ngưỡng Cosine động từ CSDL
+                $recommendedBooks = $this->recommendationService->getRecommendationsForStudent($mssv);
+            }
+        }
 
         if (!empty($keyword)) {
             $query = TaiLieu::query();

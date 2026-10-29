@@ -1,42 +1,31 @@
 @extends('layouts.admin')
 
-@section('title', 'Tổng quan Quản trị Hệ thống')
-@section('page_title', 'BẢNG ĐIỀU KHIỂN QUẢN TRỊ HỆ THỐNG IT')
+@section('title', 'Thống kê Hệ thống')
+@section('page_title', 'BẢNG ĐIỀU KHIỂN & THỐNG KÊ HỆ THỐNG ĐÀO TẠO')
 
 @section('content')
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="card card-custom p-3 bg-white border-start border-danger border-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1 fs-7">TỔNG HỒ SƠ SINH VIÊN</h6>
-                    <h3 class="fw-bold text-danger m-0">{{ $studentCount }}</h3>
-                </div>
-                <i class="bi bi-people fs-1 text-danger opacity-50"></i>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card card-custom p-3 bg-white border-start border-info border-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1 fs-7">TỔNG HỌC PHẦN ĐÀO TẠO</h6>
-                    <h3 class="fw-bold text-info m-0">{{ $courseCount }}</h3>
-                </div>
-                <i class="bi bi-book fs-1 text-info opacity-50"></i>
+
+<!-- Bảng chi tiết thống kê -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card card-custom bg-white p-4 h-100">
+            <h6 class="fw-bold text-dark border-bottom pb-2"><i class="bi bi-diagram-3 me-2 text-danger"></i>THỐNG KÊ DỮ LIỆU ĐÀO TẠO</h6>
+            <div class="mt-3 fs-7">
+                <p class="mb-2 d-flex justify-content-between"><span>Tổng số ngành đào tạo:</span> <strong>{{ $majorCount }}</strong></p>
+                <p class="mb-2 d-flex justify-content-between"><span>Tổng số học phần:</span> <strong>{{ $courseCount }}</strong></p>
+                <p class="mb-2 d-flex justify-content-between"><span>Tổng số hồ sơ sinh viên:</span> <strong>{{ $studentCount }}</strong></p>
+                <p class="mb-0 d-flex justify-content-between"><span>Tổng lượt mượn trả tài liệu:</span> <strong>{{ $borrowCount }}</strong></p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card card-custom p-3 bg-white border-start border-success border-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-muted mb-1 fs-7">MÔ HÌNH AI HIỆN HÀNH</h6>
-                    <h6 class="fw-bold text-success m-0">{{ $activeModel->ma_mo_hinh ?? 'MH_001' }}</h6>
-                </div>
-                <i class="bi bi-cpu fs-1 text-success opacity-50"></i>
+    <div class="col-md-6">
+        <div class="card card-custom bg-white p-4 h-100">
+            <h6 class="fw-bold text-dark border-bottom pb-2"><i class="bi bi-cpu me-2 text-primary"></i>LỊCH SỬ MÔ HÌNH GỢI Ý</h6>
+            <div class="mt-3 fs-7">
+                <p class="mb-2 d-flex justify-content-between"><span>Tổng số phiên bản mô hình:</span> <strong>{{ $totalModels }}</strong></p>
+                <p class="mb-2 d-flex justify-content-between"><span>Mô hình đang hoạt động:</span> <strong class="text-success">{{ $activeModel->ma_mo_hinh ?? 'N/A' }}</strong></p>
+                <p class="mb-0 d-flex justify-content-between"><span>Thời điểm tạo mô hình:</span> <strong>{{ $activeModel ? date('d/m/Y H:i', strtotime($activeModel->thoi_diem_tao)) : 'N/A' }}</strong></p>
             </div>
         </div>
     </div>

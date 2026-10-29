@@ -5,9 +5,26 @@
 
 @section('content')
 <div class="card card-custom bg-white p-4 mb-4">
+    <!-- Hiển thị thông báo phản hồi (Flash Message) -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-3 fs-7" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-3 fs-7" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h6 class="fw-bold m-0 text-dark"><i class="bi bi-list-check me-2"></i>DANH SÁCH MƯỢN TRẢ</h6>
-        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#newBorrowModal"><i class="bi bi-plus-circle me-1"></i>Tạo Phiếu Mượn</button>
+        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#newBorrowModal">
+            <i class="bi bi-plus-circle me-1"></i>Tạo Phiếu Mượn
+        </button>
     </div>
 
     <div class="table-responsive">
@@ -42,7 +59,9 @@
                             @if($b->trang_thai !== 'DaTra')
                                 <form action="{{ route('admin.library.borrow.return', $b->ma_giao_dich) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2"><i class="bi bi-check2-circle"></i> Xác nhận trả</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2">
+                                        <i class="bi bi-check2-circle"></i> Xác nhận trả
+                                    </button>
                                 </form>
                             @else
                                 <span class="text-muted fs-8">Hoàn tất</span>
@@ -65,13 +84,28 @@
         <div class="modal-content">
             <form action="{{ route('admin.library.borrow.store') }}" method="POST">
                 @csrf
-                <div class="modal-header"><h5 class="modal-title fw-bold">TẠO PHIẾU MƯỢN MỚI</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body fs-7">
-                    <div class="mb-3"><label class="form-label">Mã số sinh viên (MSSV) (*):</label><input type="text" name="mssv" class="form-control form-control-sm" required></div>
-                    <div class="mb-3"><label class="form-label">Mã tài liệu sách (*):</label><input type="text" name="ma_tai_lieu" class="form-control form-control-sm" required></div>
-                    <div class="mb-3"><label class="form-label">Ghi chú:</label><textarea name="ghi_chu" class="form-control form-control-sm" rows="2"></textarea></div>
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">TẠO PHIẾU MƯỢN MỚI</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-footer"><button type="submit" class="btn btn-sm btn-primary">Xác nhận Mượn</button></div>
+                <div class="modal-body fs-7">
+                    <div class="mb-3">
+                        <label class="form-label">Mã số sinh viên (MSSV) (*):</label>
+                        <input type="text" name="mssv" class="form-control form-control-sm" required placeholder="Nhập MSSV">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mã tài liệu sách (*):</label>
+                        <input type="text" name="ma_tai_lieu" class="form-control form-control-sm" required placeholder="Nhập mã tài liệu">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú:</label>
+                        <textarea name="ghi_chu" class="form-control form-control-sm" rows="2" placeholder="Nhập ghi chú (nếu có)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Xác nhận Mượn</button>
+                </div>
             </form>
         </div>
     </div>

@@ -11,9 +11,15 @@ class RecommendationService
 {
     /**
      * Thuật toán gợi ý tài liệu dựa trên Content-Based Filtering (TF-IDF + Cosine Similarity)
+     * Tự động lấy tham số Top-N và Ngưỡng Cosine từ CSDL, hỗ trợ gợi ý dự phòng theo Ngành.
      */
-    public function getRecommendationsForStudent(string $mssv, int $topN = 10, float $minThreshold = 0.02): array
+    public function getRecommendationsForStudent(string $mssv, ?int $topN = null, ?float $minThreshold = null): array
     {
+        // 0. Lấy cấu hình Top-N và Ngưỡng Cosine động từ CSDL
+        $config = DB::table('CauHinhGoiY')->orderBy('ma_cau_hinh', 'desc')->first();
+        $topN = $topN ?? ($config->top_n ?? 10);
+        $minThreshold = $minThreshold ?? ($config->nguong_cosine ?? 0.02);
+
         // 1. Lấy môn học đang học của sinh viên
         $student = SinhVien::with(['hocPhans' => function ($query) {
             $query->where('trang_thai', 'DangHoc');
@@ -23,12 +29,20 @@ class RecommendationService
 
         $maHocPhans = $student->hocPhans->pluck('ma_hoc_phan')->toArray();
 
-        // 2. Lấy nội dung đề cương môn học
+        // 2. Cold-start: Lấy danh sách học phần theo Ngành nếu sinh viên chưa đăng ký học phần
+        if (empty($maHocPhans)) {
+            $maHocPhans = DB::table('ChuongTrinhDaoTao')
+                ->where('ma_nganh', $student->ma_nganh)
+                ->pluck('ma_hoc_phan')
+                ->toArray();
+        }
+
+        // 3. Lấy nội dung đề cương môn học
         $syllabusTexts = DeCuongHocPhan::whereIn('ma_hoc_phan', $maHocPhans)
             ->pluck('noi_dung_de_cuong')
             ->implode(' ');
 
-        // 3. Lấy lịch sử tìm kiếm gần đây
+        // 4. Lấy lịch sử tìm kiếm gần đây
         $searchQueries = DB::table('LichSuTimKiem')
             ->where('mssv', $mssv)
             ->pluck('tu_khoa')
@@ -37,14 +51,15 @@ class RecommendationService
         // Tạo văn bản đại diện hồ sơ sinh viên
         $studentProfileText = trim($syllabusTexts . ' ' . $searchQueries);
         if (empty($studentProfileText)) {
-            $studentProfileText = $student->ho_ten;
+            $nganh = DB::table('NganhHoc')->where('ma_nganh', $student->ma_nganh)->first();
+            $studentProfileText = $nganh ? $nganh->ten_nganh : $student->ho_ten;
         }
 
-        // 4. Lấy kho tài liệu thư viện
+        // 5. Lấy kho tài liệu thư viện
         $documents = TaiLieu::all();
         if ($documents->isEmpty()) return [];
 
-        // 5. Tách từ & dựng Tập văn bản (Corpus)
+        // 6. Tách từ & dựng Tập văn bản (Corpus)
         $corpus = [];
         $docIds = [];
 
@@ -57,10 +72,10 @@ class RecommendationService
             $docIds[] = $doc->ma_tai_lieu;
         }
 
-        // 6. Tính trọng số TF-IDF
+        // 7. Tính trọng số TF-IDF
         $tfidfMatrix = $this->calculateTFIDF($corpus);
 
-        // 7. Tính Cosine Similarity
+        // 8. Tính Cosine Similarity
         $studentVector = $tfidfMatrix['PROFILE'];
         $scores = [];
 
@@ -73,7 +88,7 @@ class RecommendationService
             }
         }
 
-        // 8. Sắp xếp giảm dần và lấy Top N
+        // 9. Sắp xếp giảm dần và lấy Top N
         arsort($scores);
         $topDocIds = array_slice(array_keys($scores), 0, $topN);
 

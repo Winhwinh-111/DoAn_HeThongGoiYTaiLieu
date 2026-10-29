@@ -142,7 +142,7 @@
         </div>
     </nav>
 
-    <!-- SEARCH BANNER HỖ TRỢ TÌM KIẾM (UC04) -->
+    <!-- SEARCH BANNER HỖ TRỢ TÌM KIẾM -->
     <section class="hero-banner shadow-sm">
         <div class="container text-center">
             <h3 class="fw-bold mb-2"><i class="bi bi-search me-2"></i>HÃY TÌM NHỮNG GÌ BẠN CẦN!</h3>
@@ -150,7 +150,7 @@
             
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <!-- FORM TÌM KIẾM SÁCH CÓ AUTOCOMPLETE -->
+                    <!-- TÌM KIẾM SÁCH CÓ AUTOCOMPLETE -->
                     <form action="{{ route('home') }}" method="GET">
                         <div class="input-group input-group-lg shadow-sm">
                             <select name="category" class="form-select border-0 bg-light text-dark fw-semibold" style="max-width: 160px; font-size: 0.95rem;">
@@ -167,7 +167,7 @@
                         </div>
                     </form>
 
-                    <!-- HIỂN THỊ TỪ KHÓA NỔI BẬT (UC04) -->
+                    <!-- HIỂN THỊ TỪ KHÓA NỔI BẬT -->
                     @if(isset($topKeywords) && count($topKeywords) > 0)
                         <div class="mt-3 text-white-50 fs-7 text-start ms-1">
                             <i class="bi bi-fire text-warning me-1"></i><strong>Từ khóa nổi bật:</strong>
@@ -243,7 +243,7 @@
                         </div>
                     </div>
 
-                    <!-- MODAL CHI TIẾT SÁCH (KẾT QUẢ TÌM KIẾM - UC05) -->
+                    <!-- MODAL CHI TIẾT SÁCH  -->
                     <div class="modal fade" id="bookModal-{{ $book->ma_tai_lieu }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content border-0 shadow-lg" style="border-top: 5px solid #a71d2a; border-radius: 12px;">
@@ -306,7 +306,7 @@
                                                                 @endif
                                                             </td>
                                                         </tr>
-                                                        <!-- HIỂN THỊ HỌC PHẦN LIÊN QUAN (UC05) -->
+                                                        <!-- HIỂN THỊ HỌC PHẦN LIÊN QUAN -->
                                                         <tr>
                                                             <th>Học phần liên quan</th>
                                                             <td>
@@ -385,7 +385,7 @@
                 </div>
             @endif
         @else
-            <!-- HIỂN THỊ DANH SÁCH GỢI Ý (ĐÃ ĐĂNG NHẬP - UC03) -->
+            <!-- HIỂN THỊ DANH SÁCH GỢI Ý  -->
             @if($sinhVien)
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="section-title m-0">TÀI LIỆU GỢI Ý CHO BẠN</h4>
@@ -428,7 +428,7 @@
                             </div>
                         </div>
 
-                        <!-- MODAL CHI TIẾT SÁCH GỢI Ý (UC05) -->
+                        <!-- MODAL CHI TIẾT SÁCH GỢI Ý -->
                         <div class="modal fade" id="bookModal-{{ $book->ma_tai_lieu }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-lg modal-dialog-centered">
                                 <div class="modal-content border-0 shadow-lg" style="border-top: 5px solid #a71d2a; border-radius: 12px;">
@@ -494,7 +494,7 @@
                                                                     @endif
                                                                 </td>
                                                             </tr>
-                                                            <!-- HIỂN THỊ HỌC PHẦN LIÊN QUAN (UC05) -->
+                                                            <!-- HIỂN THỊ HỌC PHẦN LIÊN QUAN -->
                                                             <tr>
                                                                 <th>Học phần liên quan</th>
                                                                 <td>
@@ -540,7 +540,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- MODAL FOOTER CHỨA ĐÁNH DẤU VÀ PHẢN HỒI (UC06 & UC07) -->
+                                    <!-- MODAL FOOTER CHỨA ĐÁNH DẤU VÀ PHẢN HỒI -->
                                     <div class="modal-footer border-top pt-2">
                                         @if(session()->has('user_id') && session('role') === 'SinhVien')
                                             <!-- Phản hồi về mức độ phù hợp -->
@@ -619,7 +619,7 @@
                             </div>
                         </div>
 
-                        <!-- MODAL CHI TIẾT SÁCH TÀI LIỆU NỔI BẬT (UC05) -->
+                        <!-- MODAL CHI TIẾT SÁCH TÀI LIỆU NỔI BẬT -->
                         <div class="modal fade" id="bookModal-{{ $book->ma_tai_lieu }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-lg modal-dialog-centered">
                                 <div class="modal-content border-0 shadow-lg" style="border-top: 5px solid #a71d2a; border-radius: 12px;">
@@ -682,7 +682,7 @@
                                                                     @endif
                                                                 </td>
                                                             </tr>
-                                                            <!-- HIỂN THỊ HỌC PHẦN LIÊN QUAN (UC05) -->
+                                                            <!-- HIỂN THỊ HỌC PHẦN LIÊN QUAN -->
                                                             <tr>
                                                                 <th>Học phần liên quan</th>
                                                                 <td>

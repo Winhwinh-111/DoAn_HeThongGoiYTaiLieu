@@ -45,8 +45,6 @@ Route::middleware(['web', \App\Http\Middleware\CheckAdminRole::class . ':QuanTri
     Route::post('/borrow-return/return/{id}', [AdminLibraryController::class, 'borrowReturnStatus'])->name('borrow.return');
     Route::post('/borrow-return/import', [AdminLibraryController::class, 'borrowImport'])->name('borrow.import');
 
-    // Thống kê phản hồi và xu hướng tìm kiếm
-    Route::get('/reports', [AdminLibraryController::class, 'reports'])->name('reports');
 });
 
 // Quản trị Hệ thống
@@ -57,13 +55,11 @@ Route::middleware(['web', \App\Http\Middleware\CheckAdminRole::class . ':QuanTri
     Route::get('/import-training-data', [AdminSystemController::class, 'importDataView'])->name('import.view');
     Route::post('/import-training-data/process', [AdminSystemController::class, 'processImportData'])->name('import.process');
 
-    // Cập nhật mô hình AI
+    // Cập nhật mô hình 
     Route::post('/retrain-model', [AdminSystemController::class, 'retrainModel'])->name('model.retrain');
 
     // Cấu hình tham số gợi ý
     Route::get('/config', [AdminSystemController::class, 'configView'])->name('config.view');
     Route::post('/config/save', [AdminSystemController::class, 'saveConfig'])->name('config.save');
 
-    // Thống kê hệ thống
-    Route::get('/reports', [AdminSystemController::class, 'reports'])->name('reports');
 });

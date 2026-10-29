@@ -8,6 +8,7 @@ use App\Models\MoHinhGoiY;
 use App\Models\SinhVien;
 use App\Models\HocPhan;
 use App\Models\NganhHoc;
+use App\Models\MuonTra;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\DB;
 
@@ -15,11 +16,20 @@ class AdminSystemController extends Controller
 {
     public function dashboard()
     {
+        // Truy xuất toàn bộ dữ liệu thống kê từ CSDL
         $studentCount = SinhVien::count();
         $courseCount = HocPhan::count();
+        $majorCount = NganhHoc::count();
+        $borrowCount = MuonTra::count();
+        
         $activeModel = MoHinhGoiY::where('la_hien_hanh', 1)->first();
+        $totalModels = MoHinhGoiY::count();
 
-        return view('admin.system.dashboard', compact('studentCount', 'courseCount', 'activeModel'));
+        // Trả về view tổng quan (đóng vai trò là trang thống kê)
+        return view('admin.system.dashboard', compact(
+            'studentCount', 'courseCount', 'majorCount', 'borrowCount', 
+            'activeModel', 'totalModels'
+        ));
     }
 
     public function importDataView()
@@ -56,6 +66,7 @@ class AdminSystemController extends Controller
             // Hàm chuẩn hóa chuỗi phục vụ so khớp tiêu đề cột
             $normalize = function($str) {
                 if (empty($str)) return '';
+                if (is_array($str)) $str = implode(' ', $str);
                 $str = mb_strtolower(trim($str));
                 $str = preg_replace('/(á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ)/', 'a', $str);
                 $str = preg_replace('/(é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)/', 'e', $str);
@@ -111,7 +122,6 @@ class AdminSystemController extends Controller
                     $idxMaHp  = $maHpIdx ?? 0;
                     $idxTenHp = $tenHpIdx ?? 1;
                     $idxStc   = $stcIdx ?? 2;
-                    $idxMoTa  = $moTaIdx ?? 3;
 
                     $maHocPhan  = !empty($data[$idxMaHp]) ? trim($data[$idxMaHp]) : null;
                     $tenHocPhan = !empty($data[$idxTenHp]) ? trim($data[$idxTenHp]) : 'Chưa có tên học phần';
@@ -121,7 +131,8 @@ class AdminSystemController extends Controller
                         ? (int)trim($data[$idxStc])
                         : null;
 
-                    $moTa = $data[$idxMoTa] ?? null;
+                    // Mô tả: Chỉ lấy giá trị khi tệp thực sự có cột mô tả
+                    $moTa = ($moTaIdx !== null && isset($data[$moTaIdx])) ? trim($data[$moTaIdx]) : null;
 
                     if (empty($maHocPhan) || in_array(strtolower($maHocPhan), ['ma_hoc_phan', 'mahocphan', 'ma_nganh', 'manganh'])) {
                         continue;
@@ -131,7 +142,7 @@ class AdminSystemController extends Controller
                         ['ma_hoc_phan' => $maHocPhan],
                         [
                             'ten_hoc_phan' => $tenHocPhan,
-                            'so_tin_chi'   => $soTinChi, // Sẽ lưu đúng số từ file hoặc NULL vào MySQL
+                            'so_tin_chi'   => $soTinChi, 
                             'mo_ta'        => $moTa,
                         ]
                     );

@@ -17,6 +17,17 @@
         .sidebar .nav-link:hover, .sidebar .nav-link.active { color: white; background-color: rgba(255, 255, 255, 0.12); border-left: 4px solid var(--red-main); }
         .top-navbar { background-color: #ffffff; border-bottom: 2px solid var(--red-main); }
         .card-custom { border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .admin-profile-dropdown .dropdown-menu {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform: translateY(10px);
+        }
+        .admin-profile-dropdown:hover .dropdown-menu {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -32,7 +43,7 @@
                     @if(session('role') === 'QuanTriThuVien')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.library.dashboard') ? 'active' : '' }}" href="{{ route('admin.library.dashboard') }}">
-                                <i class="bi bi-speedometer2 me-2"></i>Tổng quan Thủ thư
+                                <i class="bi bi-speedometer2 me-2"></i>Thống kê tổng quan hệ thống (Thư viện)
                             </a>
                         </li>
                         <li class="nav-item">
@@ -45,15 +56,10 @@
                                 <i class="bi bi-arrow-left-right me-2"></i>Quản lý Mượn trả
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.library.reports') ? 'active' : '' }}" href="{{ route('admin.library.reports') }}">
-                                <i class="bi bi-bar-chart-line me-2"></i>Thống kê Phản hồi & Tìm kiếm
-                            </a>
-                        </li>
                     @elseif(session('role') === 'QuanTriHeThong')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.system.dashboard') ? 'active' : '' }}" href="{{ route('admin.system.dashboard') }}">
-                                <i class="bi bi-cpu me-2"></i>Tổng quan Hệ thống
+                                <i class="bi bi-cpu me-2"></i>Thống kê tổng quan hệ thống (IT)
                             </a>
                         </li>
                         <li class="nav-item">
@@ -66,11 +72,7 @@
                                 <i class="bi bi-sliders me-2"></i>Cấu hình & Mô Hình
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.system.reports') ? 'active' : '' }}" href="{{ route('admin.system.reports') }}">
-                                <i class="bi bi-graph-up-arrow me-2"></i>Thống kê Hệ thống
-                            </a>
-                        </li>
+                        
                     @endif
                     
                     <li class="nav-item mt-4 border-top border-secondary pt-2">
@@ -82,18 +84,77 @@
             </div>
 
             <div class="col-md-9 col-lg-10 ms-sm-auto p-0">
+                <!-- THANH TOP-NAVBAR -->
                 <div class="top-navbar p-3 d-flex justify-content-between align-items-center">
                     <h5 class="m-0 fw-bold text-dark">@yield('page_title', 'Bảng điều khiển')</h5>
-                    <div class="d-flex align-items-center">
-                        <span class="badge bg-danger me-3 px-3 py-2 fs-7">
-                            <i class="bi bi-person-badge me-1"></i>{{ session('admin_name', 'Cán bộ') }} ({{ session('role') }})
-                        </span>
-                        <form action="{{ route('logout') }}" method="POST" class="m-0">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
-                            </button>
-                        </form>
+                    
+                    <!-- Phần Profile Quản trị viên góc phải -->
+                    <div class="dropdown admin-profile-dropdown position-relative">
+                        
+                        <!-- 1. Hiển thị mặc định (Tên và Vai trò) -->
+                        <div class="d-flex align-items-center" style="cursor: pointer;">
+                            <div class="text-end me-2">
+                                <div class="fw-bold fs-6 text-dark">
+                                    {{ Auth::user()->ho_ten ?? session('admin_name', 'Chưa cập nhật') }}
+                                </div>
+                                <div class="fs-8 text-muted">
+                                    {{ Auth::user()->vai_tro ?? session('role', 'Chưa phân quyền') }}
+                                </div>
+                            </div>
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->ho_ten ?? session('admin_name', 'Admin')) }}&background=0D8ABC&color=fff" alt="Avatar" class="rounded-circle shadow-sm" width="40" height="40">
+                        </div>
+
+                        <!-- 2. Bảng thông tin chi tiết hiện khi Hover (Lấy 100% từ DB) -->
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-3 mt-1" style="min-width: 270px; right: 0; left: auto; z-index: 1050;">
+                            <li class="border-bottom pb-2 mb-2 text-center">
+                                <h6 class="fw-bold mb-0 text-primary">
+                                    {{ Auth::user()->ho_ten ?? session('admin_name', 'Chưa cập nhật') }}
+                                </h6>
+                                <small class="text-muted">
+                                    {{ Auth::user()->vai_tro ?? session('role', 'Chưa phân quyền') }}
+                                </small>
+                            </li>
+                            
+                            <!-- Mã quản trị viên -->
+                            <li class="fs-7 mb-2 text-nowrap">
+                                <i class="bi bi-person-vcard text-primary me-2"></i>
+                                <strong>Mã QTV:</strong> 
+                                {{ Auth::user()->ma_quan_tri ?? Auth::user()->ma_quan_tri?? session('ma_quan_tri', 'N/A') }}
+                            </li>
+
+                            <!-- Chức vụ -->
+                            <li class="fs-7 mb-2 text-nowrap">
+                                <i class="bi bi-briefcase text-success me-2"></i>
+                                <strong>Chức vụ:</strong> 
+                                {{ Auth::user()->chuc_vu ?? session('chuc_vu', 'Chưa cập nhật') }}
+                            </li>
+
+                            <!-- Số điện thoại -->
+                            <li class="fs-7 mb-2 text-nowrap">
+                                <i class="bi bi-telephone text-warning me-2"></i>
+                                <strong>SĐT:</strong> 
+                                {{ Auth::user()->so_dien_thoai ?? session('so_dien_thoai', 'Chưa cập nhật') }}
+                            </li>
+
+                            <!-- Email -->
+                            <li class="fs-7 mb-2 text-nowrap">
+                                <i class="bi bi-envelope text-danger me-2"></i>
+                                <strong>Email:</strong> 
+                                {{ Auth::user()->email ?? session('email', 'Chưa cập nhật') }}
+                            </li>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <!-- Nút Đăng xuất -->
+                            <li>
+                                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger text-center fw-bold rounded py-1">
+                                        <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 

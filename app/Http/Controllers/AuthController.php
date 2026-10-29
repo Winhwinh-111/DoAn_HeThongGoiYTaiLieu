@@ -35,15 +35,21 @@ class AuthController extends Controller
                 Session::put('student_name', $sv ? $sv->ho_ten : 'Sinh viên');
                 return redirect()->route('home');
             } 
-            elseif ($user->vai_tro === 'QuanTriThuVien') {
+            elseif (in_array($user->vai_tro, ['QuanTriThuVien', 'QuanTriHeThong'])) {
+                // Lấy đầy đủ thông tin Quản trị viên từ bảng QuanTriVien
                 $qtv = QuanTriVien::where('ma_tai_khoan', $user->ma_tai_khoan)->first();
-                Session::put('admin_name', $qtv ? $qtv->ho_ten : 'Thủ thư');
-                return redirect()->route('admin.library.dashboard');
-            } 
-            elseif ($user->vai_tro === 'QuanTriHeThong') {
-                $qtv = QuanTriVien::where('ma_tai_khoan', $user->ma_tai_khoan)->first();
-                Session::put('admin_name', $qtv ? $qtv->ho_ten : 'Quản trị hệ thống');
-                return redirect()->route('admin.system.dashboard');
+                
+                Session::put('admin_name', $qtv ? $qtv->ho_ten : 'Cán bộ');
+                Session::put('ma_quan_tri', $qtv ? $qtv->ma_quan_tri : 'Chưa có');
+                Session::put('chuc_vu', $qtv ? $qtv->chuc_vu : 'Chưa cập nhật');
+                Session::put('so_dien_thoai', $qtv ? $qtv->so_dien_thoai : 'Chưa cập nhật');
+                Session::put('email', $qtv ? $qtv->email : 'Chưa cập nhật');
+
+                if ($user->vai_tro === 'QuanTriThuVien') {
+                    return redirect()->route('admin.library.dashboard');
+                } else {
+                    return redirect()->route('admin.system.dashboard');
+                }
             }
         }
 
