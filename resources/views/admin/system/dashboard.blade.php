@@ -14,7 +14,6 @@
                 <p class="mb-2 d-flex justify-content-between"><span>Tổng số ngành đào tạo:</span> <strong>{{ $majorCount }}</strong></p>
                 <p class="mb-2 d-flex justify-content-between"><span>Tổng số học phần:</span> <strong>{{ $courseCount }}</strong></p>
                 <p class="mb-2 d-flex justify-content-between"><span>Tổng số hồ sơ sinh viên:</span> <strong>{{ $studentCount }}</strong></p>
-                <p class="mb-0 d-flex justify-content-between"><span>Tổng lượt mượn trả tài liệu:</span> <strong>{{ $borrowCount }}</strong></p>
             </div>
         </div>
     </div>

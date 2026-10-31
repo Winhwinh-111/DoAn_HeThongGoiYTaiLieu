@@ -21,6 +21,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/profile', [HomeController::class, 'profile'])->name('profile');
 
+Route::get('/document/{id}', [App\Http\Controllers\HomeController::class, 'documentDetail'])->name('document.detail');
+
 Route::post('/bookmark/toggle', [HomeController::class, 'toggleBookmark'])->name('bookmark.toggle');
 Route::get('/bookmarks', [HomeController::class, 'bookmarks'])->name('bookmarks');
 

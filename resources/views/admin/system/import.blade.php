@@ -6,20 +6,23 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-md-8">
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
+        {{-- KHU VỰC HIỂN THỊ THÔNG BÁO LỖI VÀ THÀNH CÔNG --}}
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
 
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
 
+        {{-- FORM NHẬP DỮ LIỆU --}}
         <div class="card card-custom bg-white p-4 shadow-sm">
             <h6 class="fw-bold text-dark border-bottom pb-3 mb-4">
                 <i class="bi bi-file-earmark-arrow-up text-primary me-2"></i>TẢI TỆP DỮ LIỆU ĐÀO TẠO (CSV / EXCEL)
@@ -35,6 +38,9 @@
                         <option value="sinh_vien">Danh sách Sinh viên</option>
                         <option value="hoc_phan">Danh mục Học phần</option>
                         <option value="nganh_hoc">Danh mục Ngành học</option>
+                        <option value="de_cuong_hoc_phan">Đề cương Học phần</option>
+                        <option value="chuong_trinh_dao_tao">Chương trình Đào tạo</option>
+                        <option value="sinh_vien_hoc_phan">Danh sách Sinh viên - Học phần</option>
                     </select>
                 </div>
 

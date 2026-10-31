@@ -9,14 +9,17 @@ use App\Models\SinhVien;
 use App\Models\HocPhan;
 use App\Models\NganhHoc;
 use App\Models\MuonTra;
+use App\Models\TaiLieu;
+use App\Services\NlpTokenizerService;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class AdminSystemController extends Controller
 {
     public function dashboard()
     {
-        // Truy xuất toàn bộ dữ liệu thống kê từ CSDL
         $studentCount = SinhVien::count();
         $courseCount = HocPhan::count();
         $majorCount = NganhHoc::count();
@@ -25,241 +28,327 @@ class AdminSystemController extends Controller
         $activeModel = MoHinhGoiY::where('la_hien_hanh', 1)->first();
         $totalModels = MoHinhGoiY::count();
 
-        // Trả về view tổng quan (đóng vai trò là trang thống kê)
         return view('admin.system.dashboard', compact(
             'studentCount', 'courseCount', 'majorCount', 'borrowCount', 
             'activeModel', 'totalModels'
         ));
     }
 
-    public function importDataView()
-    {
-        return view('admin.system.import');
-    }
+        public function importDataView()
+        {
+            return view('admin.system.import');
+        }
 
-    public function processImportData(Request $request)
-    {
-        $request->validate([
-            'data_type'   => 'required',
-            'file_import' => 'required|file|mimes:csv,txt,xlsx,xls|max:5000',
-        ], [
-            'data_type.required'   => 'Vui lòng chọn loại dữ liệu đào tạo cần nhập!',
-            'file_import.required' => 'Vui lòng chọn tệp dữ liệu!',
-            'file_import.mimes'    => 'Hệ thống chỉ hỗ trợ định dạng tệp .csv, .xlsx, .xls!',
-        ]);
+        public function processImportData(Request $request)
+        {
+            // 1. Kiểm tra file và loại dữ liệu đầu vào
+            $request->validate([
+                'data_type'   => 'required',
+                'file_import' => 'required|file|mimes:csv,txt,xlsx,xls|max:5000',
+            ], [
+                'data_type.required'   => 'Vui lòng chọn loại dữ liệu đào tạo cần nhập!',
+                'file_import.required' => 'Vui lòng chọn tệp dữ liệu!',
+                'file_import.mimes'    => 'Hệ thống chỉ hỗ trợ định dạng tệp .csv, .xlsx, .xls!',
+            ]);
 
-        $type = strtolower(trim($request->input('data_type')));
+            $type = strtolower(trim($request->input('data_type')));
 
-        try {
-            $file = $request->file('file_import');
-            $spreadsheet = IOFactory::load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
+            try {
+                // 2. Tải tệp Excel / CSV và lấy danh sách các dòng
+                $file = $request->file('file_import');
+                $spreadsheet = IOFactory::load($file->getRealPath());
+                $sheet = $spreadsheet->getActiveSheet();
+                $rows = $sheet->toArray();
 
-            if (empty($rows)) {
-                return redirect()->back()->with('error', 'Tệp dữ liệu rỗng!');
-            }
+                if (empty($rows)) {
+                    return redirect()->back()->with('error', 'Tệp dữ liệu rỗng!');
+                }
 
-            // Lấy dòng tiêu đề đầu tiên (Header)
-            $headerRow = array_shift($rows);
+                // Tách dòng tiêu đề (Header Row)
+                $headerRow = array_shift($rows);
 
-            // Hàm chuẩn hóa chuỗi phục vụ so khớp tiêu đề cột
-            $normalize = function($str) {
-                if (empty($str)) return '';
-                if (is_array($str)) $str = implode(' ', $str);
-                $str = mb_strtolower(trim($str));
-                $str = preg_replace('/(á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ)/', 'a', $str);
-                $str = preg_replace('/(é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)/', 'e', $str);
-                $str = preg_replace('/(í|ì|ỉ|ĩ|ị)/', 'i', $str);
-                $str = preg_replace('/(ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ)/', 'o', $str);
-                $str = preg_replace('/(ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự)/', 'u', $str);
-                $str = preg_replace('/(ý|ỳ|ỷ|ỹ|ỵ)/', 'y', $str);
-                $str = preg_replace('/(đ)/', 'd', $str);
-                return preg_replace('/[^a-z0-9]/', '', $str);
-            };
+                // Hàm chuẩn hóa chuỗi phục vụ so khớp tiêu đề cột (bỏ dấu, viết thường, bỏ ký tự đặc biệt)
+                $normalize = function($str) {
+                    if (empty($str)) return '';
+                    if (is_array($str)) $str = implode(' ', $str);
+                    $str = mb_strtolower(trim($str));
+                    $str = preg_replace('/(á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ)/', 'a', $str);
+                    $str = preg_replace('/(é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)/', 'e', $str);
+                    $str = preg_replace('/(í|ì|ỉ|ĩ|ị)/', 'i', $str);
+                    $str = preg_replace('/(ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ)/', 'o', $str);
+                    $str = preg_replace('/(ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự)/', 'u', $str);
+                    $str = preg_replace('/(ý|ỳ|ỷ|ỹ|ỵ)/', 'y', $str);
+                    $str = preg_replace('/(đ)/', 'd', $str);
+                    return preg_replace('/[^a-z0-9]/', '', $str);
+                };
 
-            // Tìm vị trí cột dựa trên từ khóa trong tiêu đề
-            $findColIdx = function($keywords, $defaultIdx = null) use ($headerRow, $normalize) {
-                foreach ($headerRow as $idx => $cellText) {
-                    $normText = $normalize($cellText);
-                    foreach ($keywords as $kw) {
-                        if (!empty($normText) && str_contains($normText, $kw)) {
-                            return $idx;
+                // Hàm tìm chỉ số cột theo từ khóa (Ánh xạ tiêu đề động - Dynamic Header Mapping)
+                $findColIdx = function($keywords) use ($headerRow, $normalize) {
+                    foreach ($headerRow as $idx => $cellText) {
+                        $normText = $normalize($cellText);
+                        foreach ($keywords as $kw) {
+                            if (!empty($normText) && str_contains($normText, $kw)) {
+                                return $idx;
+                            }
                         }
                     }
+                    return null;
+                };
+
+                // 3. Quét tìm vị trí các cột tiêu đề từ file
+                $maHpIdx     = $findColIdx(['mahocphan', 'mamonhoc', 'mahp', 'mamon']);
+                $tenHpIdx    = $findColIdx(['tenhocphan', 'tenmonhoc', 'tenhp', 'tenmon']);
+                $stcIdx      = $findColIdx(['sotinchi', 'stc', 'sotc', 'tinchi']);
+                $moTaIdx     = $findColIdx(['mota', 'ghichu', 'noidung', 'tomtat']);
+                
+                $maNganhIdx  = $findColIdx(['manganh', 'machuyennganh', 'manch']);
+                $tenNganhIdx = $findColIdx(['tennganh', 'tenchuyennganh', 'tench']);
+
+                $mssvIdx     = $findColIdx(['mssv', 'masinhvien', 'masv', 'mathe']);
+                $hoTenIdx    = $findColIdx(['hoten', 'tensinhvien', 'tensv', 'hoandten']);
+                $ngaySinhIdx = $findColIdx(['ngaysinh', 'ns']);
+                $gioiTinhIdx = $findColIdx(['gioitinh', 'phai']);
+                $sdtIdx      = $findColIdx(['sodienthoai', 'sdt', 'dienthoai', 'phone']);
+                $hanTheIdx   = $findColIdx(['hanthe', 'ngayhethan']);
+                $maTkIdx     = $findColIdx(['mataikhoan', 'matk', 'taikhoan']);
+
+                $loaiTlIdx   = $findColIdx(['loaitailieu', 'loaitl']);
+                $ndDeCuongIdx= $findColIdx(['noidungdecuong', 'decuong']);
+                $trangThaiIdx= $findColIdx(['trangthai', 'trangthaihoc']);
+
+                // 4. Kiểm tra tính hợp lệ của cấu trúc tiêu đề file theo từng loại dữ liệu
+                if (($type === 'nganh_hoc' || $type === 'nganhhoc') && ($maNganhIdx === null || $tenNganhIdx === null)) {
+                    return redirect()->back()->with('error', 'Tệp không đúng cấu trúc mẫu Danh mục Ngành học! Thiếu cột "Mã ngành" hoặc "Tên ngành".');
                 }
-                return $defaultIdx;
-            };
 
-            // Tự động quét và tìm vị trí chính xác của từng cột
-            $maHpIdx     = $findColIdx(['mahocphan', 'mamonhoc', 'mahp', 'mamon']);
-            $tenHpIdx    = $findColIdx(['tenhocphan', 'tenmonhoc', 'tenhp', 'tenmon']);
-            $stcIdx      = $findColIdx(['sotinchi', 'stc', 'sotc', 'tinchi']);
-            $moTaIdx     = $findColIdx(['mota', 'ghichu', 'noidung']);
-            
-            $maNganhIdx  = $findColIdx(['manganh', 'machuyennganh', 'manch']);
-            $tenNganhIdx = $findColIdx(['tennganh', 'tenchuyennganh', 'tench']);
-
-            $mssvIdx     = $findColIdx(['mssv', 'masinhvien', 'masv', 'mathe']);
-            $hoTenIdx    = $findColIdx(['hoten', 'tensinhvien', 'tensv', 'hoandten']);
-            $ngaySinhIdx = $findColIdx(['ngaysinh', 'ns']);
-            $gioiTinhIdx = $findColIdx(['gioitinh', 'phai']);
-            $sdtIdx      = $findColIdx(['sodienthoai', 'sdt', 'dienthoai', 'phone']);
-            $hanTheIdx   = $findColIdx(['hanthe', 'ngayhethan']);
-            $maTkIdx     = $findColIdx(['mataikhoan', 'matk', 'taikhoan']);
-
-            $count = 0;
-
-            DB::beginTransaction();
-
-            foreach ($rows as $data) {
-                if (empty($data) || array_filter($data) === []) {
-                    continue;
+                if (($type === 'hoc_phan' || $type === 'hocphan') && ($maHpIdx === null || $tenHpIdx === null)) {
+                    return redirect()->back()->with('error', 'Tệp không đúng cấu trúc mẫu Danh mục Học phần! Thiếu cột "Mã học phần" hoặc "Tên học phần".');
                 }
 
-                // 1. NHẬP HỌC PHẦN (HocPhan)
-                if ($type === 'hoc_phan' || $type === 'hocphan') {
-                    $idxMaHp  = $maHpIdx ?? 0;
-                    $idxTenHp = $tenHpIdx ?? 1;
-                    $idxStc   = $stcIdx ?? 2;
+                if (($type === 'de_cuong_hoc_phan' || $type === 'decuonghocphan') && ($maHpIdx === null || ($ndDeCuongIdx === null && $moTaIdx === null))) {
+                    return redirect()->back()->with('error', 'Tệp không đúng cấu trúc mẫu Đề cương Học phần! Thiếu cột "Mã học phần" hoặc "Nội dung đề cương".');
+                }
 
-                    $maHocPhan  = !empty($data[$idxMaHp]) ? trim($data[$idxMaHp]) : null;
-                    $tenHocPhan = !empty($data[$idxTenHp]) ? trim($data[$idxTenHp]) : 'Chưa có tên học phần';
-                    
-                    // Lấy chính xác giá trị từ file, nếu rỗng hoặc không phải số thì gán null
-                    $soTinChi = (isset($data[$idxStc]) && trim($data[$idxStc]) !== '' && is_numeric(trim($data[$idxStc])))
-                        ? (int)trim($data[$idxStc])
-                        : null;
+                if (($type === 'chuong_trinh_dao_tao' || $type === 'chuongtrinhdaotao') && ($maNganhIdx === null || $maHpIdx === null)) {
+                    return redirect()->back()->with('error', 'Tệp không đúng cấu trúc mẫu Chương trình Đào tạo! Thiếu cột "Mã ngành" hoặc "Mã học phần".');
+                }
 
-                    // Mô tả: Chỉ lấy giá trị khi tệp thực sự có cột mô tả
-                    $moTa = ($moTaIdx !== null && isset($data[$moTaIdx])) ? trim($data[$moTaIdx]) : null;
+                if (($type === 'sinh_vien' || $type === 'sinhvien') && ($mssvIdx === null || $hoTenIdx === null)) {
+                    return redirect()->back()->with('error', 'Tệp không đúng cấu trúc mẫu Hồ sơ Sinh viên! Thiếu cột "MSSV" hoặc "Họ tên".');
+                }
 
-                    if (empty($maHocPhan) || in_array(strtolower($maHocPhan), ['ma_hoc_phan', 'mahocphan', 'ma_nganh', 'manganh'])) {
+                if (($type === 'sinh_vien_hoc_phan' || $type === 'sinhvienhocphan') && ($mssvIdx === null || $maHpIdx === null)) {
+                    return redirect()->back()->with('error', 'Tệp không đúng cấu trúc mẫu Sinh viên - Học phần! Thiếu cột "MSSV" hoặc "Mã học phần".');
+                }
+
+                // 5. Khởi tạo biến theo dõi kết quả và mở Transaction
+                $countSuccess = 0;
+                $countSkipped = 0;
+                $errors = [];
+
+                DB::beginTransaction();
+
+                // 6. Duyệt qua từng dòng dữ liệu trong tệp
+                foreach ($rows as $rowIndex => $data) {
+                    if (empty($data) || array_filter($data) === []) {
                         continue;
                     }
 
-                    HocPhan::updateOrCreate(
-                        ['ma_hoc_phan' => $maHocPhan],
-                        [
-                            'ten_hoc_phan' => $tenHocPhan,
-                            'so_tin_chi'   => $soTinChi, 
-                            'mo_ta'        => $moTa,
-                        ]
-                    );
-                    $count++;
+                    $lineNum = $rowIndex + 2; // Số dòng thực tế trong file Excel
 
-                    // TỰ ĐỘNG XỬ LÝ NẾU TỆP EXCEL CÓ CẢ CỘT MÃ NGÀNH VÀ TÊN NGÀNH
-                    if ($maNganhIdx !== null && !empty($data[$maNganhIdx])) {
-                        $maNganhVal  = trim($data[$maNganhIdx]);
-                        $tenNganhVal = ($tenNganhIdx !== null && !empty($data[$tenNganhIdx])) ? trim($data[$tenNganhIdx]) : null;
+                    // Nhập danh mục ngành học
+                    if ($type === 'nganh_hoc' || $type === 'nganhhoc') {
+                        $maNganh  = !empty($data[$maNganhIdx]) ? trim($data[$maNganhIdx]) : null;
+                        $tenNganh = !empty($data[$tenNganhIdx]) ? trim($data[$tenNganhIdx]) : null;
 
-                        if (!in_array(strtolower($maNganhVal), ['ma_nganh', 'manganh'])) {
-                            // Tự động lưu/cập nhật Ngành học
-                            NganhHoc::updateOrCreate(
-                                ['ma_nganh' => $maNganhVal],
-                                [
-                                    'ten_nganh' => $tenNganhVal ?? 'NGÀNH HỌC TỰ ĐỘNG'
-                                ]
-                            );
+                        if (empty($maNganh) || in_array(strtolower($maNganh), ['ma_nganh', 'manganh'])) continue;
 
-                            // Tự động gán vào Khung chương trình đào tạo
-                            DB::table('ChuongTrinhDaoTao')->updateOrInsert([
-                                'ma_nganh'    => $maNganhVal,
-                                'ma_hoc_phan' => $maHocPhan,
-                            ]);
+                        if (empty($tenNganh)) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Tên ngành học bị trống [Mã: {$maNganh}].";
+                            continue;
                         }
-                    }
-                }
-                // 2. NHẬP NGÀNH HỌC (NganhHoc)
-                elseif ($type === 'nganh_hoc' || $type === 'nganhhoc') {
-                    $idxMaNg  = $maNganhIdx ?? 0;
-                    $idxTenNg = $tenNganhIdx ?? 1;
 
-                    $maNganh  = !empty($data[$idxMaNg]) ? trim($data[$idxMaNg]) : null;
-                    $tenNganh = !empty($data[$idxTenNg]) ? trim($data[$idxTenNg]) : 'Chưa có tên ngành';
-
-                    if (empty($maNganh) || in_array(strtolower($maNganh), ['ma_nganh', 'manganh'])) {
-                        continue;
+                        NganhHoc::updateOrCreate(['ma_nganh' => $maNganh], ['ten_nganh' => $tenNganh]);
+                        $countSuccess++;
                     }
 
-                    NganhHoc::updateOrCreate(
-                        ['ma_nganh' => $maNganh],
-                        [
-                            'ten_nganh' => $tenNganh,
-                        ]
-                    );
-                    $count++;
-                }
-                // 3. NHẬP SINH VIÊN (SinhVien)
-                elseif ($type === 'sinh_vien' || $type === 'sinhvien') {
-                    $idxMssv  = $mssvIdx ?? 0;
-                    $idxHoTen = $hoTenIdx ?? 1;
-                    $idxNS    = $ngaySinhIdx ?? 2;
-                    $idxGT    = $gioiTinhIdx ?? 3;
-                    $idxSdt   = $sdtIdx ?? 4;
-                    $idxHT    = $hanTheIdx ?? 5;
-                    $idxMNg   = $maNganhIdx ?? 6;
-                    $idxMTk   = $maTkIdx ?? 7;
+                    // Nhập danh mục học phần
+                    elseif ($type === 'hoc_phan' || $type === 'hocphan') {
+                        $maHocPhan  = !empty($data[$maHpIdx]) ? trim($data[$maHpIdx]) : null;
+                        $tenHocPhan = !empty($data[$tenHpIdx]) ? trim($data[$tenHpIdx]) : null;
 
-                    $mssv = !empty($data[$idxMssv]) ? trim($data[$idxMssv]) : null;
+                        if (empty($maHocPhan) || in_array(strtolower($maHocPhan), ['ma_hoc_phan', 'mahocphan'])) continue;
 
-                    if (empty($mssv) || in_array(strtolower($mssv), ['mssv', 'masinhvien'])) {
-                        continue;
+                        if (empty($tenHocPhan)) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Tên học phần bị trống [Mã: {$maHocPhan}].";
+                            continue;
+                        }
+
+                        $soTinChi = ($stcIdx !== null && isset($data[$stcIdx]) && is_numeric(trim($data[$stcIdx]))) ? (int)trim($data[$stcIdx]) : null;
+                        $moTa     = ($moTaIdx !== null && isset($data[$moTaIdx])) ? trim($data[$moTaIdx]) : null;
+
+                        HocPhan::updateOrCreate(
+                            ['ma_hoc_phan' => $maHocPhan],
+                            ['ten_hoc_phan' => $tenHocPhan, 'so_tin_chi' => $soTinChi, 'mo_ta' => $moTa]
+                        );
+                        $countSuccess++;
                     }
 
-                    $ngaySinh = !empty($data[$idxNS]) ? date('Y-m-d', strtotime(str_replace('/', '-', $data[$idxNS]))) : null;
-                    $hanThe   = !empty($data[$idxHT]) ? date('Y-m-d', strtotime(str_replace('/', '-', $data[$idxHT]))) : '2027-06-30';
+                    //  Nhập đề cương học phần
+                    elseif ($type === 'de_cuong_hoc_phan' || $type === 'decuonghocphan') {
+                        $idxNd = $ndDeCuongIdx ?? $moTaIdx;
+                        $maHocPhan      = !empty($data[$maHpIdx]) ? trim($data[$maHpIdx]) : null;
+                        $noiDungDeCuong = !empty($data[$idxNd]) ? trim($data[$idxNd]) : null;
+                        $loaiTaiLieu    = ($loaiTlIdx !== null && !empty($data[$loaiTlIdx])) ? trim($data[$loaiTlIdx]) : 'Giáo trình chính';
 
-                    SinhVien::updateOrCreate(
-                        ['mssv' => $mssv],
-                        [
-                            'ho_ten'        => $data[$idxHoTen] ?? 'Chưa cập nhật',
-                            'ngay_sinh'     => $ngaySinh,
-                            'gioi_tinh'     => $data[$idxGT] ?? 'Nam',
-                            'so_dien_thoai' => $data[$idxSdt] ?? null,
-                            'han_the'       => $hanThe,
-                            'ma_nganh'      => !empty($data[$idxMNg]) ? trim($data[$idxMNg]) : null,
-                            'ma_tai_khoan'  => !empty($data[$idxMTk]) ? trim($data[$idxMTk]) : null,
-                        ]
-                    );
-                    $count++;
-                }
-                // 4. NHẬP KHUNG CHƯƠNG TRÌNH ĐÀO TẠO
-                elseif ($type === 'chuong_trinh_dao_tao' || $type === 'chuongtrinhdaotao') {
-                    $idxMaNg = $maNganhIdx ?? 0;
-                    $idxMaHp = $maHpIdx ?? 1;
+                        if (empty($maHocPhan) || in_array(strtolower($maHocPhan), ['ma_hoc_phan', 'mahocphan'])) continue;
 
-                    $maNganh   = !empty($data[$idxMaNg]) ? trim($data[$idxMaNg]) : null;
-                    $maHocPhan = !empty($data[$idxMaHp]) ? trim($data[$idxMaHp]) : null;
+                        // Kiểm tra khóa tham chiếu (UC16)
+                        if (!HocPhan::where('ma_hoc_phan', $maHocPhan)->exists()) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Mã học phần [{$maHocPhan}] không tồn tại trong CSDL.";
+                            continue;
+                        }
 
-                    if (!empty($maNganh) && !empty($maHocPhan) && !in_array(strtolower($maNganh), ['ma_nganh', 'manganh'])) {
-                        DB::table('ChuongTrinhDaoTao')->updateOrInsert(
+                        if (empty($noiDungDeCuong)) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Nội dung đề cương bị trống [Mã HP: {$maHocPhan}].";
+                            continue;
+                        }
+
+                        DB::table('DeCuongHocPhan')->updateOrInsert(
+                            ['ma_hoc_phan' => $maHocPhan],
+                            ['noi_dung_de_cuong' => $noiDungDeCuong, 'loai_tai_lieu' => $loaiTaiLieu]
+                        );
+                        $countSuccess++;
+                    }
+
+                    // Nhập chương trình đào tạo
+                    elseif ($type === 'chuong_trinh_dao_tao' || $type === 'chuongtrinhdaotao') {
+                        $maNganh   = !empty($data[$maNganhIdx]) ? trim($data[$maNganhIdx]) : null;
+                        $maHocPhan = !empty($data[$maHpIdx]) ? trim($data[$maHpIdx]) : null;
+
+                        if (empty($maNganh) || in_array(strtolower($maNganh), ['ma_nganh', 'manganh'])) continue;
+
+                        // Kiểm tra khóa tham chiếu (UC16)
+                        if (!NganhHoc::where('ma_nganh', $maNganh)->exists()) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Mã ngành [{$maNganh}] chưa tồn tại trong CSDL.";
+                            continue;
+                        }
+
+                        if (!HocPhan::where('ma_hoc_phan', $maHocPhan)->exists()) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Mã học phần [{$maHocPhan}] chưa tồn tại trong CSDL.";
+                            continue;
+                        }
+
+                        DB::table('ChuongTrinhDaoTao')->updateOrInsert([
+                            'ma_nganh'    => $maNganh,
+                            'ma_hoc_phan' => $maHocPhan
+                        ]);
+                        $countSuccess++;
+                    }
+
+                    // Nhập hồ sơ sinh viên
+                    elseif ($type === 'sinh_vien' || $type === 'sinhvien') {
+                        $mssv    = !empty($data[$mssvIdx]) ? trim($data[$mssvIdx]) : null;
+                        $maNganh = ($maNganhIdx !== null && !empty($data[$maNganhIdx])) ? trim($data[$maNganhIdx]) : null;
+
+                        if (empty($mssv) || in_array(strtolower($mssv), ['mssv', 'masinhvien'])) continue;
+
+                        // Kiểm tra khóa tham chiếu Ngành học (UC16)
+                        if (!empty($maNganh) && !NganhHoc::where('ma_nganh', $maNganh)->exists()) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Sinh viên [{$mssv}] có Mã ngành [{$maNganh}] không tồn tại.";
+                            continue;
+                        }
+
+                        $hoTen    = ($hoTenIdx !== null && !empty($data[$hoTenIdx])) ? trim($data[$hoTenIdx]) : 'Chưa cập nhật';
+                        $ngaySinh = ($ngaySinhIdx !== null && !empty($data[$ngaySinhIdx])) ? date('Y-m-d', strtotime(str_replace('/', '-', $data[$ngaySinhIdx]))) : null;
+                        $gioiTinh = ($gioiTinhIdx !== null && !empty($data[$gioiTinhIdx])) ? trim($data[$gioiTinhIdx]) : 'Nam';
+                        $sdt      = ($sdtIdx !== null && !empty($data[$sdtIdx])) ? trim($data[$sdtIdx]) : null;
+                        $hanThe   = ($hanTheIdx !== null && !empty($data[$hanTheIdx])) ? date('Y-m-d', strtotime(str_replace('/', '-', $data[$hanTheIdx]))) : '2027-06-30';
+                        $maTk     = ($maTkIdx !== null && !empty($data[$maTkIdx])) ? trim($data[$maTkIdx]) : null;
+
+                        SinhVien::updateOrCreate(
+                            ['mssv' => $mssv],
                             [
-                                'ma_nganh'    => $maNganh,
-                                'ma_hoc_phan' => $maHocPhan
+                                'ho_ten'        => $hoTen,
+                                'ngay_sinh'     => $ngaySinh,
+                                'gioi_tinh'     => $gioiTinh,
+                                'so_dien_thoai' => $sdt,
+                                'han_the'       => $hanThe,
+                                'ma_nganh'      => $maNganh,
+                                'ma_tai_khoan'  => $maTk,
                             ]
                         );
-                        $count++;
+                        $countSuccess++;
+                    }
+
+                    // Nhập thông tin học phần sinh viên
+                    elseif ($type === 'sinh_vien_hoc_phan' || $type === 'sinhvienhocphan') {
+                        $mssv      = !empty($data[$mssvIdx]) ? trim($data[$mssvIdx]) : null;
+                        $maHocPhan = !empty($data[$maHpIdx]) ? trim($data[$maHpIdx]) : null;
+
+                        if (empty($mssv) || in_array(strtolower($mssv), ['mssv', 'masinhvien'])) continue;
+
+                        // Kiểm tra khóa tham chiếu MSSV và Mã học phần 
+                        if (!SinhVien::where('mssv', $mssv)->exists()) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: MSSV [{$mssv}] chưa tồn tại trong CSDL.";
+                            continue;
+                        }
+
+                        if (!HocPhan::where('ma_hoc_phan', $maHocPhan)->exists()) {
+                            $countSkipped++;
+                            $errors[] = "Dòng {$lineNum}: Mã học phần [{$maHocPhan}] chưa tồn tại trong CSDL.";
+                            continue;
+                        }
+
+                        $trangThai = ($trangThaiIdx !== null && !empty($data[$trangThaiIdx])) ? trim($data[$trangThaiIdx]) : 'Đang học';
+
+                        DB::table('SinhVienHocPhan')->updateOrInsert(
+                            ['mssv' => $mssv, 'ma_hoc_phan' => $maHocPhan],
+                            ['trang_thai' => $trangThai]
+                        );
+                        $countSuccess++;
                     }
                 }
+
+                DB::commit();
+
+                // 7. Xử lý phản hồi thông báo kết quả chính xác cho View
+                if ($countSuccess === 0 && $countSkipped === 0) {
+                    return redirect()->back()->with('error', 'Không tìm thấy dữ liệu hợp lệ trong tệp!');
+                }
+
+                if ($countSuccess === 0 && $countSkipped > 0) {
+                    $msg = "Nhập dữ liệu thất bại! Bỏ qua toàn bộ {$countSkipped} dòng lỗi. Chi tiết: " . implode(' | ', array_slice($errors, 0, 5));
+                    return redirect()->back()->with('error', $msg);
+                }
+
+                $msg = "Nhập dữ liệu hoàn tất! Thành công: {$countSuccess} bản ghi.";
+                if ($countSkipped > 0) {
+                    $msg .= " Bỏ qua: {$countSkipped} dòng lỗi. Chi tiết: " . implode(' | ', array_slice($errors, 0, 5));
+                }
+
+                return redirect()->back()->with('success', $msg);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Lỗi xử lý tệp: ' . $e->getMessage());
             }
-
-            DB::commit();
-
-            if ($count === 0) {
-                return redirect()->back()->with('error', 'Không tìm thấy dữ liệu hợp lệ trong tệp! Kiểm tra lại định dạng tệp hoặc loại dữ liệu đã chọn.');
-            }
-
-            return redirect()->back()->with('success', "Đã trích xuất và cập nhật thành công {$count} bản ghi loại [{$type}] vào CSDL!");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi xử lý tệp: ' . $e->getMessage());
         }
-    }
 
     public function configView()
     {
-        $config = CauHinhGoiY::first() ?? new CauHinhGoiY(['top_n' => 10, 'nguong_cosine' => 0.15]);
+        $config = CauHinhGoiY::orderBy('created_at', 'desc')->first() 
+            ?? CauHinhGoiY::orderBy('ma_cau_hinh', 'desc')->first() 
+            ?? new CauHinhGoiY(['top_n' => 10, 'nguong_cosine' => 0.15]);
+
         $activeModel = MoHinhGoiY::where('la_hien_hanh', 1)->first();
 
         return view('admin.system.config', compact('config', 'activeModel'));
@@ -272,21 +361,35 @@ class AdminSystemController extends Controller
             'nguong_cosine' => 'required|numeric|between:0,1',
         ]);
 
-        $config = CauHinhGoiY::first();
-        if ($config) {
-            $config->update($request->all());
-        } else {
+        DB::beginTransaction();
+        try {
+            // Luôn sinh MÃ CẤU HÌNH MỚI và TẠO BẢN GHI MỚI để lưu lịch sử
+            $maCauHinhMoi = 'CH_' . time();
+
             CauHinhGoiY::create([
-                'ma_cau_hinh'  => 'CH_001',
+                'ma_cau_hinh'  => $maCauHinhMoi,
                 'ma_tai_khoan' => session('user_id'),
                 'top_n'        => $request->top_n,
-                'nguong_cosine'=> $request->nguong_cosine
+                'nguong_cosine'=> $request->nguong_cosine,
+                'created_at'   => now(),
+                'updated_at'   => now(),
             ]);
+
+            // Thao tác xóa Cache bọc an toàn
+            try {
+                Cache::forget('app_latest_config');
+            } catch (\Throwable $e) {
+                // Bỏ qua nếu bảng Cache chưa sẵn sàng
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', "Đã tạo cấu hình tham số mới [{$maCauHinhMoi}] thành công!");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Lưu cấu hình thất bại: ' . $e->getMessage());
         }
-
-        return redirect()->back()->with('success', 'Lưu cấu hình tham số gợi ý thành công!');
     }
-
     public function retrainModel()
     {
         MoHinhGoiY::where('la_hien_hanh', 1)->update(['la_hien_hanh' => 0]);
@@ -303,8 +406,4 @@ class AdminSystemController extends Controller
         return redirect()->back()->with('success', 'Mô hình gợi ý đã được cập nhật thành công!');
     }
 
-    public function reports()
-    {
-        return view('admin.system.reports');
-    }
 }

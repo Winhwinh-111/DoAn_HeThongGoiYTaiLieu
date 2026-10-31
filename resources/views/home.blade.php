@@ -797,19 +797,20 @@
         </div>
     </div>
 
-    <!-- FOOTER HUB -->
-    <footer class="bg-dark text-white pt-4 pb-3 mt-5 border-top border-danger border-3">
+    <footer style="background-color: #8F0728;" class="text-white pt-4 pb-3 mt-5 border-top border-danger border-3">
         <div class="container text-center fs-7">
             <p class="mb-1 fw-bold">THƯ VIỆN TRƯỜNG ĐẠI HỌC NGÂN HÀNG THÀNH PHỐ HỒ CHÍ MINH</p>
-            <p class="text-light opacity-75 mb-0">Địa chỉ: 36 Tôn Thất Thuyết, Phường 18, Quận 4, TP. Hồ Chí Minh / 56 Hoàng Diệu 2, Thủ Đức, TP. Hồ Chí Minh</p>
-            <small class="text-muted d-block mt-2">© 2026 HUB Library System - Hệ thống Gợi ý Tài liệu Thông minh</small>
+            <p class="text-white opacity-75 mb-0">Địa chỉ: 56 Hoàng Diệu 2, P. Thủ Đức, TP.HCM</p>
+            <p class="text-white opacity-75 mb-0">Điện thoại: (028) 38971651 - Email: <a href="mailto:thuvien@hub.edu.vn" class="text-white text-decoration-underline">thuvien@hub.edu.vn</a></p>
+            <p class="text-white opacity-75 mb-0">Fanpage: <a href="https://www.facebook.com/thuvien.hub" target="_blank" class="text-white text-decoration-underline">https://www.facebook.com/thuvien.hub</a></p>
+            <small class="text-white-50 d-block mt-2">© 2026 HUB Library System - Hệ thống Gợi ý Tài liệu Thông minh</small>
         </div>
     </footer>
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- SCRIPT AUTOCOMPLETE AJAX CHO KHUNG TÌM KIẾM (UC04) -->
+    <!-- SCRIPT AUTOCOMPLETE AJAX CHO KHUNG TÌM KIẾM -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const searchInput = document.getElementById('searchInput');

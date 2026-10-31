@@ -29,6 +29,7 @@ class HomeController extends Controller
         $allBooks = [];
         $searchResults = null;
         $markedBookIds = [];
+        $isSuggestedByMajor = false;
 
         $keyword = trim($request->get('keyword', ''));
         $category = $request->get('category', 'Tất cả danh mục');
@@ -48,31 +49,21 @@ class HomeController extends Controller
             // Lấy danh sách mã tài liệu mà sinh viên đã đánh dấu
             $markedBookIds = DanhDau::where('mssv', $mssv)->pluck('ma_tai_lieu')->toArray();
 
-            // Ghi nhận lịch sử tìm kiếm vào CSDL (Đã sửa tên cột chuẩn: ma_luot_tim_kiem)
+            // Ghi nhận lịch sử tìm kiếm vào CSDL
             if (!empty($keyword)) {
                 LichSuTimKiem::create([
-                    'ma_luot_tim_kiem'   => 'SK_' . time() . '_' . rand(100, 999),
-                    'mssv'               => $mssv,
-                    'tu_khoa'            => $keyword,
+                    'ma_tim_kiem'       => 'SK_' . time() . '_' . rand(100, 999),
+                    'mssv'              => $mssv,
+                    'tu_khoa'           => $keyword,
                     'thoi_diem_tim_kiem' => now(),
                 ]);
             }
 
-            // Lấy danh sách gợi ý tài liệu cá nhân hóa (TF-IDF & Cosine Similarity)
-            if ($sinhVien) {
-                $recommendedBooks = $this->recommendationService->getRecommendationsForStudent($mssv, 8, 0.01);
-            }
-        }
-        if (Session::has('user_id') && Session::get('role') === 'SinhVien') {
-            $mssv = Session::get('mssv');
-            $sinhVien = SinhVien::find($mssv);
-            $markedBookIds = DanhDau::where('mssv', $mssv)->pluck('ma_tai_lieu')->toArray();
-
+            // Gọi gợi ý tài liệu cá nhân hóa (Tự động lấy tham số Top-N & Ngưỡng từ CSDL)
             if ($sinhVien) {
                 $hasActiveCourses = $sinhVien->hocPhans()->where('trang_thai', 'DangHoc')->exists();
                 $isSuggestedByMajor = !$hasActiveCourses;
 
-                // Tự động dùng tham số Top-N và Ngưỡng Cosine động từ CSDL
                 $recommendedBooks = $this->recommendationService->getRecommendationsForStudent($mssv);
             }
         }
@@ -86,7 +77,7 @@ class HomeController extends Controller
                   ->orWhere('mo_ta', 'LIKE', "%{$keyword}%");
             });
 
-            // Lọc thêm theo Danh mục (nếu chọn)
+            // Lọc thêm theo Danh mục
             if ($category === 'Sách in') {
                 $query->where('ma_tai_lieu', 'LIKE', 'HUB%');
             } elseif ($category === 'Sách điện tử') {
@@ -108,7 +99,8 @@ class HomeController extends Controller
             'keyword', 
             'category',
             'markedBookIds',
-            'topKeywords'
+            'topKeywords',
+            'isSuggestedByMajor'
         ));
     }
 
@@ -221,7 +213,7 @@ class HomeController extends Controller
         return redirect()->back()->with('success', 'Cảm ơn bạn đã phản hồi về mức độ phù hợp của gợi ý!');
     }
 
-    // UC08: Xem thông tin cá nhân và danh sách học phần
+    // Xem thông tin cá nhân và danh sách học phần
     public function profile()
     {
         if (!Session::has('user_id')) {
@@ -234,7 +226,7 @@ class HomeController extends Controller
         return view('profile', compact('sinhVien'));
     }
 
-    //  Xem lịch sử mượn trả
+    // Xem lịch sử mượn trả
     public function history()
     {
         if (!Session::has('user_id')) {

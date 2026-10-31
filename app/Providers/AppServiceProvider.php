@@ -1,14 +1,22 @@
 <?php
 
-namespace Database\Seeders;
+namespace App\Providers;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Pagination\Paginator; 
+use Illuminate\Support\Facades\Schema;
 
-class DatabaseSeeder extends Seeder
+class AppServiceProvider extends ServiceProvider
 {
-    public function run(): void
+    
+    public function register(): void
     {
-        DB::unprepared(file_get_contents(database_path('seeders/data.sql')));
+        //
+    }
+
+    public function boot(): void
+    {
+        Paginator::useBootstrapFive();
+        Schema::defaultStringLength(191);
     }
 }

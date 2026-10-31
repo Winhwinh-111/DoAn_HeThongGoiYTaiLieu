@@ -10,13 +10,15 @@ class CauHinhGoiY extends Model
     protected $primaryKey = 'ma_cau_hinh';
     public $incrementing = false;
     protected $keyType = 'string';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'ma_cau_hinh',
         'ma_tai_khoan',
         'top_n',
-        'nguong_cosine'
+        'nguong_cosine',
+        'created_at',
+        'updated_at'
     ];
 
     public function taiKhoan()
