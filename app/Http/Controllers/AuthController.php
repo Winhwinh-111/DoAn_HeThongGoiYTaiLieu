@@ -10,57 +10,65 @@ use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
-    {
-        $request->validate([
-            'ten_dang_nhap' => 'required',
-            'mat_khau' => 'required',
-        ]);
+    
+public function login(Request $request)
+{
+    // Kiểm tra dữ liệu đầu vào
+    $request->validate([
+        'TenDangNhap' => 'required',
+        'MatKhau' => 'required',
+    ], [
+        'TenDangNhap.required' => 'Vui lòng nhập tài khoản!',
+        'MatKhau.required' => 'Vui lòng nhập mật khẩu!',
+    ]);
 
-        $hashedInput = hash('sha256', $request->mat_khau);
+    $hashedInput = hash('sha256', $request->MatKhau);
 
-        $user = TaiKhoan::where('ten_dang_nhap', $request->ten_dang_nhap)
-            ->where('mat_khau', $hashedInput)
-            ->first();
+    $user = TaiKhoan::where('TenDangNhap', $request->TenDangNhap)
+        ->where('MatKhau', $hashedInput)
+        ->first();
 
-        if ($user) {
-            Session::put('user_id', $user->ma_tai_khoan);
-            Session::put('username', $user->ten_dang_nhap);
-            Session::put('role', $user->vai_tro);
+    if ($user) {
+        Session::put('user_id', $user->MaTaiKhoan);
+        Session::put('username', $user->TenDangNhap);
+        Session::put('role', $user->VaiTro);
 
-            // Phân luồng Session và chuyển hướng theo Vai trò
-            if ($user->vai_tro === 'SinhVien') {
-                $sv = SinhVien::where('ma_tai_khoan', $user->ma_tai_khoan)->first();
-                Session::put('mssv', $sv ? $sv->mssv : $user->ten_dang_nhap);
-                Session::put('student_name', $sv ? $sv->ho_ten : 'Sinh viên');
-                return redirect()->route('home');
-            } 
-            elseif (in_array($user->vai_tro, ['QuanTriThuVien', 'QuanTriHeThong'])) {
-                // Lấy đầy đủ thông tin Quản trị viên từ bảng QuanTriVien
-                $qtv = QuanTriVien::where('ma_tai_khoan', $user->ma_tai_khoan)->first();
-                
-                Session::put('admin_name', $qtv ? $qtv->ho_ten : 'Cán bộ');
-                Session::put('ma_quan_tri', $qtv ? $qtv->ma_quan_tri : 'Chưa có');
-                Session::put('chuc_vu', $qtv ? $qtv->chuc_vu : 'Chưa cập nhật');
-                Session::put('so_dien_thoai', $qtv ? $qtv->so_dien_thoai : 'Chưa cập nhật');
-                Session::put('email', $qtv ? $qtv->email : 'Chưa cập nhật');
+        if ($user->VaiTro === 'SinhVien') {
+            $sv = SinhVien::where('MaTaiKhoan', $user->MaTaiKhoan)->first();
 
-                if ($user->vai_tro === 'QuanTriThuVien') {
-                    return redirect()->route('admin.library.dashboard');
-                } else {
-                    return redirect()->route('admin.system.dashboard');
-                }
+            Session::put('MSSV', $sv ? $sv->MSSV : $user->TenDangNhap);
+            Session::put('student_name', $sv ? $sv->HoTen : 'Sinh viên');
+
+            return redirect()->route('home');
+        }
+        elseif (in_array($user->VaiTro, ['QuanTriThuVien', 'QuanTriHeThong'])) {
+            $qtv = QuanTriVien::where('MaTaiKhoan', $user->MaTaiKhoan)->first();
+
+            Session::put('admin_name', $qtv ? $qtv->HoTen : 'Cán bộ');
+            Session::put('MaQuanTri', $qtv ? $qtv->MaQuanTri : 'Chưa có');
+            Session::put('ChucVu', $qtv ? $qtv->ChucVu : 'Chưa cập nhật');
+            Session::put('SoDienThoai', $qtv ? $qtv->SoDienThoai : 'Chưa cập nhật');
+            Session::put('Email', $qtv ? $qtv->Email : 'Chưa cập nhật');
+
+            if ($user->VaiTro === 'QuanTriThuVien') {
+                return redirect()->route('admin.library.dashboard');
+            } else {
+                return redirect()->route('admin.system.dashboard');
             }
         }
-
-        return redirect()->route('home')
-            ->withErrors(['error' => 'Tên đăng nhập hoặc mật khẩu không chính xác!'])
-            ->with('show_login_modal', true);
     }
 
-    public function logout()
-    {
-        Session::flush();
-        return redirect()->route('home');
-    }
+    // Sai tài khoản hoặc mật khẩu
+    return redirect()->route('home')
+        ->withErrors([
+            'error' => 'Tên đăng nhập hoặc mật khẩu không chính xác!'
+        ])
+        ->withInput($request->only('TenDangNhap'))
+        ->with('show_login_modal', true);
+}
+public function logout()
+{
+    Session::flush();
+    return redirect()->route('home');
+}
 }

@@ -43,21 +43,21 @@
             <tbody>
                 @forelse($borrowList as $b)
                     <tr>
-                        <td class="fw-bold text-center text-primary">{{ $b->ma_giao_dich }}</td>
-                        <td class="text-center">{{ $b->mssv }}</td>
-                        <td>{{ $b->taiLieu->nhan_de ?? $b->ma_tai_lieu }}</td>
-                        <td class="text-center">{{ date('d/m/Y H:i', strtotime($b->ngay_muon)) }}</td>
-                        <td class="text-center">{{ $b->ngay_tra ? date('d/m/Y H:i', strtotime($b->ngay_tra)) : '-' }}</td>
+                        <td class="fw-bold text-center text-primary">{{ $b->MaGiaoDich }}</td>
+                        <td class="text-center">{{ $b->MSSV }}</td>
+                        <td>{{ $b->taiLieu->NhanDe ?? $b->MaTaiLieu }}</td>
+                        <td class="text-center">{{ date('d/m/Y H:i', strtotime($b->NgayMuon)) }}</td>
+                        <td class="text-center">{{ $b->NgayTra ? date('d/m/Y H:i', strtotime($b->NgayTra)) : '-' }}</td>
                         <td class="text-center">
-                            @if($b->trang_thai === 'DaTra')
+                            @if($b->TrangThai === 'DaTra')
                                 <span class="badge bg-success">Đã trả</span>
                             @else
                                 <span class="badge bg-warning text-dark">Đang mượn</span>
                             @endif
                         </td>
                         <td class="text-center">
-                            @if($b->trang_thai !== 'DaTra')
-                                <form action="{{ route('admin.library.borrow.return', $b->ma_giao_dich) }}" method="POST">
+                            @if($b->TrangThai !== 'DaTra')
+                                <form action="{{ route('admin.library.borrow.return', $b->MaGiaoDich) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2">
                                         <i class="bi bi-check2-circle"></i> Xác nhận trả
@@ -95,11 +95,11 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Mã tài liệu sách (*):</label>
-                        <input type="text" name="ma_tai_lieu" class="form-control form-control-sm" required placeholder="Nhập mã tài liệu">
+                        <input type="text" name="MaTaiLieu" class="form-control form-control-sm" required placeholder="Nhập mã tài liệu">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Ghi chú:</label>
-                        <textarea name="ghi_chu" class="form-control form-control-sm" rows="2" placeholder="Nhập ghi chú (nếu có)"></textarea>
+                        <textarea name="GhiChu" class="form-control form-control-sm" rows="2" placeholder="Nhập ghi chú (nếu có)"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

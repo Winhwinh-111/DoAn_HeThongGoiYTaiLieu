@@ -59,7 +59,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                     <h4 class="section-title m-0">LỊCH SỬ MƯỢN TRẢ TÀI LIỆU</h4>
-                    <span class="text-muted fs-7">Sinh viên: <strong>{{ $sinhVien->ho_ten ?? session('student_name') }}</strong> ({{ session('mssv') }})</span>
+                    <span class="text-muted fs-7">Sinh viên: <strong>{{ $sinhVien->ho_ten ?? session('student_name') }}</strong> ({{ session('MSSV') }})</span>
                 </div>
                 
                 <div class="card-body p-4 pt-0">
@@ -83,42 +83,42 @@
                                         <td class="text-center fw-bold text-secondary">{{ $loop->iteration }}</td>
                                         
                                         <td>
-                                            <div class="fw-semibold text-dark">{{ $item->taiLieu->nhan_de ?? $item->ma_tai_lieu }}</div>
-                                            <small class="text-muted">Mã tài liệu: {{ $item->ma_tai_lieu }}</small>
+                                            <div class="fw-semibold text-dark">{{ $item->taiLieu->NhanDe ?? $item->MaTaiLieu }}</div>
+                                            <small class="text-muted">Mã tài liệu: {{ $item->MaTaiLieu }}</small>
                                         </td>
                                         
                                         <td class="text-center">
-                                            {{ $item->ngay_muon ? date('d/m/Y', strtotime($item->ngay_muon)) : 'N/A' }}
+                                            {{ $item->NgayMuon ? date('d/m/Y', strtotime($item->NgayMuon)) : 'N/A' }}
                                         </td>
                                         
                                         <td class="text-center">
-                                            @if($item->ngay_tra)
-                                                <span class="text-success fw-semibold">{{ date('d/m/Y', strtotime($item->ngay_tra)) }}</span>
+                                            @if($item->NgayTra)
+                                                <span class="text-success fw-semibold">{{ date('d/m/Y', strtotime($item->NgayTra)) }}</span>
                                             @else
                                                 <span class="text-muted fs-7"><i>Chưa trả</i></span>
                                             @endif
                                         </td>
                                         
                                         <td class="text-center">
-                                            @if($item->trang_thai === 'Đã trả' || $item->trang_thai === 'DaTra')
+                                            @if($item->TrangThai === 'Đã trả' || $item->TrangThai === 'DaTra')
                                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
                                                     <i class="bi bi-check-circle me-1"></i>Đã trả
                                                 </span>
-                                            @elseif($item->trang_thai === 'Đang mượn' || $item->trang_thai === 'DangMuon')
+                                            @elseif($item->TrangThai === 'Đang mượn' || $item->TrangThai === 'DangMuon')
                                                 <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1">
                                                     <i class="bi bi-journal-arrow-up me-1"></i>Đang mượn
                                                 </span>
-                                            @elseif($item->trang_thai === 'Quá hạn' || $item->trang_thai === 'QuaHan')
+                                            @elseif($item->TrangThai === 'Quá hạn' || $item->TrangThai === 'QuaHan')
                                                 <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1">
                                                     <i class="bi bi-exclamation-triangle me-1"></i>Quá hạn
                                                 </span>
                                             @else
-                                                <span class="badge bg-secondary px-2 py-1">{{ $item->trang_thai }}</span>
+                                                <span class="badge bg-secondary px-2 py-1">{{ $item->TrangThai }}</span>
                                             @endif
                                         </td>
                                         
                                         <td class="fs-7 text-muted">
-                                            {{ $item->ghi_chu ?? '-' }}
+                                            {{ $item->GhiChu ?? '-' }}
                                         </td>
                                     </tr>
                                 @empty

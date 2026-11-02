@@ -16,23 +16,23 @@ class AdminLibraryController extends Controller
     {
         // 1. Dữ liệu tổng quan
         $totalBooks = TaiLieu::count();
-        $totalBorrowing = MuonTra::where('trang_thai', 'DangMuon')->count(); // Đang cho mượn
-        $recentBorrows = MuonTra::with(['taiLieu', 'sinhVien'])->orderBy('ngay_muon', 'desc')->limit(5)->get();
+        $totalBorrowing = MuonTra::where('TrangThai', 'DangMuon')->count(); // Đang cho mượn
+        $recentBorrows = MuonTra::with(['taiLieu', 'sinhVien'])->orderBy('NgayMuon', 'desc')->limit(5)->get();
 
         // 2. Dữ liệu thống kê 
         $totalFeedback = PhanHoi::count();
-        $goodFeedback = PhanHoi::where('muc_danh_gia', 'PhuHop')->count();
-        $badFeedback = PhanHoi::where('muc_danh_gia', 'KhongPhuHop')->count();
+        $goodFeedback = PhanHoi::where('MucDanhGia', 'PhuHop')->count();
+        $badFeedback = PhanHoi::where('MucDanhGia', 'KhongPhuHop')->count();
 
-        $topKeywords = LichSuTimKiem::select('tu_khoa', DB::raw('count(*) as count'))
-            ->groupBy('tu_khoa')
+        $topKeywords = LichSuTimKiem::select('TuKhoa', DB::raw('count(*) as count'))
+            ->groupBy('TuKhoa')
             ->orderBy('count', 'desc')
             ->limit(10)
             ->get();
 
         // Thống kê mượn trả 
         $totalBorrowedHistory = MuonTra::count(); // Tổng số lượng đã mượn
-        $totalReturned = MuonTra::where('trang_thai', 'DaTra')->count(); // Tổng số lượng đã trả
+        $totalReturned = MuonTra::where('TrangThai', 'DaTra')->count(); // Tổng số lượng đã trả
 
         return view('admin.library.dashboard', compact(
             'totalBooks', 'totalBorrowing', 'totalFeedback', 'recentBorrows',
@@ -47,35 +47,35 @@ class AdminLibraryController extends Controller
         $query = TaiLieu::query();
 
         if (!empty($keyword)) {
-            $query->where('nhan_de', 'LIKE', "%{$keyword}%")
-                  ->orWhere('tac_gia', 'LIKE', "%{$keyword}%")
-                  ->orWhere('ma_tai_lieu', 'LIKE', "%{$keyword}%");
+            $query->where('NhanDe', 'LIKE', "%{$keyword}%")
+                  ->orWhere('TacGia', 'LIKE', "%{$keyword}%")
+                  ->orWhere('MaTaiLieu', 'LIKE', "%{$keyword}%");
         }
 
-        $documents = $query->orderBy('ma_tai_lieu', 'desc')->paginate(10);
+        $documents = $query->orderBy('MaTaiLieu', 'desc')->paginate(10);
         return view('admin.library.documents', compact('documents', 'keyword'));
     }
 
     public function documentsStore(Request $request)
     {
         $request->validate([
-            'ma_tai_lieu' => 'required|unique:TaiLieu,ma_tai_lieu',
-            'nhan_de'     => 'required',
+            'MaTaiLieu' => 'required|unique:TaiLieu,MaTaiLieu',
+            'NhanDe'     => 'required',
         ]);
 
         TaiLieu::create([
-            'ma_tai_lieu'        => $request->ma_tai_lieu,
-            'nhan_de'            => $request->nhan_de,
-            'tac_gia'            => $request->tac_gia,
-            'nha_xuat_ban'       => $request->nha_xuat_ban,
-            'nam_xuat_ban'       => $request->nam_xuat_ban ?? date('Y'),
-            'ngon_ngu'           => $request->ngon_ngu ?? 'Tiếng Việt',
-            'isbn'               => $request->isbn,
-            'thuat_ngu_chu_de'   => $request->thuat_ngu_chu_de,
-            'mo_ta'              => $request->mo_ta,
-            'noi_luu_giu'        => $request->noi_luu_giu ?? 'Kho tầng 1',
-            'trang_thai_su_dung' => $request->trang_thai_su_dung ?? 'Co_San',
-            'anh_bia'            => $request->anh_bia,
+            'MaTaiLieu'        => $request->MaTaiLieu,
+            'NhanDe'            => $request->NhanDe,
+            'TacGia'            => $request->TacGia,
+            'NhaXuatBan'       => $request->NhaXuatBan,
+            'NamXuatBan'       => $request->NamXuatBan ?? date('Y'),
+            'NgonNgu'           => $request->NgonNgu ?? 'Tiếng Việt',
+            'ISBN'               => $request->ISBN,
+            'ThuatNguChuDe'   => $request->ThuatNguChuDe,
+            'MoTa'              => $request->MoTa,
+            'NoiLuuGiu'        => $request->NoiLuuGiu ?? 'Kho tầng 1',
+            'TrangThaiSuDung' => $request->TrangThaiSuDung ?? 'Co_San',
+            'AnhBia'            => $request->AnhBia,
         ]);
 
         return redirect()->back()->with('success', 'Thêm mới tài liệu thành công!');
@@ -96,171 +96,470 @@ class AdminLibraryController extends Controller
     }
 
     // Nhập tệp danh mục TaiLieu 
-    public function documentsImport(Request $request)
-    {
-        $request->validate([
-            'file_import' => 'required|file|mimes:csv,txt,xlsx,xls|max:5000',
-        ], [
-            'file_import.required' => 'Vui lòng chọn tệp dữ liệu!',
-            'file_import.mimes'    => 'Hệ thống chỉ hỗ trợ định dạng tệp .csv, .xlsx, .xls!',
-        ]);
+    
+    
+public function documentsImport(Request $request)
+{
+    // 1. Kiểm tra file tải lên
+    $request->validate([
+        'file_import' => 'required|file|mimes:csv,txt,xlsx,xls|max:5000',
+    ], [
+        'file_import.required' => 'Vui lòng chọn tệp dữ liệu!',
+        'file_import.file'     => 'Tệp tải lên không hợp lệ!',
+        'file_import.mimes'    => 'Chỉ hỗ trợ CSV, TXT, XLSX và XLS!',
+        'file_import.max'      => 'Dung lượng file tối đa là 5MB!',
+    ]);
 
-        try {
-            $file = $request->file('file_import');
-            $spreadsheet = IOFactory::load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
+    try {
+        // 2. Đọc file Excel
+        $file = $request->file('file_import');
 
-            if (empty($rows)) {
-                return redirect()->back()->with('error', 'Tệp dữ liệu rỗng!');
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $rows = $sheet->toArray(null, true, true, false);
+
+        if (empty($rows)) {
+            return redirect()->back()
+                ->with('error', 'File dữ liệu đang trống!');
+        }
+
+        // 3. Chuẩn hóa tên cột
+        $normalize = function ($value) {
+
+            if ($value === null || is_array($value)) {
+                return '';
             }
 
-            $headerRow = array_shift($rows);
+            $value = trim((string) $value);
 
-            $normalize = function($str) {
-                if (empty($str)) return '';
-                if (is_array($str)) $str = implode(' ', $str);
-                $str = mb_strtolower(trim($str));
-                $str = preg_replace('/(á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ)/', 'a', $str);
-                $str = preg_replace('/(é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)/', 'e', $str);
-                $str = preg_replace('/(í|ì|ỉ|ĩ|ị)/', 'i', $str);
-                $str = preg_replace('/(ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ)/', 'o', $str);
-                $str = preg_replace('/(ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự)/', 'u', $str);
-                $str = preg_replace('/(ý|ỳ|ỷ|ỹ|ỵ)/', 'y', $str);
-                $str = preg_replace('/(đ)/', 'd', $str);
-                return preg_replace('/[^a-z0-9]/', '', $str);
-            };
+            // Xóa BOM
+            $value = preg_replace('/^\xEF\xBB\xBF/', '', $value);
 
-            $findColIdx = function($keywords, $defaultIdx = null) use ($headerRow, $normalize) {
-                foreach ($headerRow as $idx => $cellText) {
-                    $normText = $normalize($cellText);
-                    foreach ($keywords as $kw) {
-                        if (!empty($normText) && str_contains($normText, $kw)) {
-                            return $idx;
-                        }
+            // Chuyển về chữ thường
+            $value = mb_strtolower($value, 'UTF-8');
+
+            // Bỏ dấu tiếng Việt
+            $value = \Illuminate\Support\Str::ascii($value);
+
+            // Loại bỏ khoảng trắng và ký tự đặc biệt
+            return preg_replace('/[^a-z0-9]/', '', $value);
+        };
+
+        // 4. Danh sách tên cột được chấp nhận
+        $columnAliases = [
+            'MaTaiLieu' => [
+                'matailieu', 'matl', 'masach'
+            ],
+
+            'NhanDe' => [
+                'nhande', 'tensach', 'tentailieu',
+                'tieude', 'title'
+            ],
+
+            'TacGia' => [
+                'tacgia', 'author'
+            ],
+
+            'NhaXuatBan' => [
+                'nhaxuatban', 'nxb', 'publisher'
+            ],
+
+            'NamXuatBan' => [
+                'namxuatban', 'namxb', 'nam',
+                'publicationyear'
+            ],
+
+            'NgonNgu' => [
+                'ngonngu', 'language'
+            ],
+
+            'ISBN' => [
+                'isbn'
+            ],
+
+            'ThuatNguChuDe' => [
+                'thuatnguchude', 'chude',
+                'thuatngu', 'keywords'
+            ],
+
+            'MoTa' => [
+                'mota', 'tomtat', 'description'
+            ],
+
+            'NoiLuuGiu' => [
+                'noiluugiu', 'vitri', 'kho',
+                'location'
+            ],
+
+            'TrangThaiSuDung' => [
+                'trangthaisudung', 'trangthai',
+                'status'
+            ],
+
+            'AnhBia' => [
+                'anhbia', 'hinhbia', 'cover',
+                'image', 'url'
+            ],
+        ];
+
+        // 5. Tự động tìm dòng tiêu đề
+        // Hỗ trợ file có dòng Column1, Column2 ở phía trên
+        $headerIndex = null;
+        $columnIndexes = [];
+
+        foreach ($rows as $rowIndex => $row) {
+
+            $normalizedHeaders = [];
+
+            foreach ($row as $columnIndex => $header) {
+                $normalizedHeaders[$columnIndex] = $normalize($header);
+            }
+
+            $tempIndexes = [];
+
+            foreach ($columnAliases as $field => $aliases) {
+
+                $tempIndexes[$field] = null;
+
+                foreach ($normalizedHeaders as $columnIndex => $header) {
+
+                    if (in_array($header, $aliases, true)) {
+                        $tempIndexes[$field] = $columnIndex;
+                        break;
                     }
                 }
-                return $defaultIdx;
-            };
+            }
 
-            $maDocIdx    = $findColIdx(['matailieu', 'matl', 'masach'], 0);
-            $nhanDeIdx   = $findColIdx(['nhande', 'tensach', 'tentailieu'], 1);
-            $tacGiaIdx   = $findColIdx(['tacgia'], 2);
-            $nxbIdx      = $findColIdx(['nhaxuatban', 'nxb'], 3);
-            $namXbIdx    = $findColIdx(['namxuatban', 'namxb', 'nam'], 4);
-            $ngonNguIdx  = $findColIdx(['ngonngu', 'lang'], 5);
-            $isbnIdx     = $findColIdx(['isbn'], 6);
-            $chuDeIdx    = $findColIdx(['thuatnguchude', 'chude', 'thuatngu'], 7);
-            $moTaIdx     = $findColIdx(['mota', 'tomtat'], 8);
-            $noiLuuIdx   = $findColIdx(['noiluugiu', 'vitri', 'kho'], 9);
-            $ttSudungIdx = $findColIdx(['trangthaisudung', 'trangthai'], 10);
-            $anhBiaIdx   = $findColIdx(['anhbia', 'hinhbia', 'url', 'cover'], 11);
+            // Chỉ nhận dòng có đủ 2 cột bắt buộc
+            if (
+                $tempIndexes['MaTaiLieu'] !== null &&
+                $tempIndexes['NhanDe'] !== null
+            ) {
+                $headerIndex = $rowIndex;
+                $columnIndexes = $tempIndexes;
+                break;
+            }
+        }
 
-            $getValue = function($row, $idx) {
-                if ($idx === null || !isset($row[$idx])) return null;
-                $val = $row[$idx];
-                if (is_array($val)) $val = implode(', ', $val);
-                $val = preg_replace('/[\[\]\']/', '', (string)$val);
-                return trim($val);
-            };
+        if ($headerIndex === null) {
+            return redirect()->back()->with(
+                'error',
+                'Không tìm thấy dòng tiêu đề chứa hai cột bắt buộc: MaTaiLieu và NhanDe!'
+            );
+        }
 
-            $safeTruncate = function($str, $limit = 250) {
-                if (empty($str)) return null;
-                return (mb_strlen($str, 'UTF-8') > $limit) ? mb_substr($str, 0, $limit - 3, 'UTF-8') . '...' : $str;
-            };
+        // 6. Lấy dữ liệu phía dưới dòng tiêu đề
+        $dataRows = array_slice($rows, $headerIndex + 1);
 
-            $countSuccess = 0;
-            $countSkipped = 0;
+        // 7. Hàm lấy dữ liệu theo tên cột
+        $getValue = function ($row, $field) use ($columnIndexes) {
 
-            DB::beginTransaction();
+            $index = $columnIndexes[$field] ?? null;
 
-            foreach ($rows as $data) {
-                if (empty($data) || array_filter($data) === []) {
+            if ($index === null || !array_key_exists($index, $row)) {
+                return null;
+            }
+
+            $value = $row[$index];
+
+            if ($value === null || is_array($value)) {
+                return null;
+            }
+
+            $value = trim((string) $value);
+
+            return $value === '' ? null : $value;
+        };
+
+        // 8. Hàm kiểm tra độ dài
+        $checkLength = function ($value, $max, $label) {
+
+            if (
+                $value !== null &&
+                mb_strlen($value, 'UTF-8') > $max
+            ) {
+                return "{$label} vượt quá {$max} ký tự";
+            }
+
+            return null;
+        };
+
+        // 9. Khởi tạo thống kê
+        $countSuccess = 0;
+
+        $skipReasons = [
+            'missing_code'   => 0,
+            'missing_title'  => 0,
+            'duplicate_db'   => 0,
+            'duplicate_file' => 0,
+            'invalid_year'   => 0,
+            'invalid_length' => 0,
+            'database_error' => 0,
+        ];
+
+        $errorDetails = [];
+
+        // Lưu mã đã gặp trong file
+        $seenCodes = [];
+
+        // 10. Xử lý từng dòng
+        foreach ($dataRows as $index => $row) {
+
+            $excelRow = $headerIndex + $index + 2;
+
+            // Bỏ qua dòng trống
+            $hasData = false;
+
+            foreach ($row as $cell) {
+                if (
+                    $cell !== null &&
+                    trim((string) $cell) !== ''
+                ) {
+                    $hasData = true;
+                    break;
+                }
+            }
+
+            if (!$hasData) {
+                continue;
+            }
+
+            // Lấy mã và nhan đề
+            $maTaiLieu = $getValue($row, 'MaTaiLieu');
+            $nhanDe = $getValue($row, 'NhanDe');
+
+            // 10.1. Kiểm tra mã tài liệu
+            if ($maTaiLieu === null) {
+                $skipReasons['missing_code']++;
+                $errorDetails[] =
+                    "Dòng {$excelRow}: Thiếu mã tài liệu.";
+                continue;
+            }
+
+            if ($nhanDe === null) {
+                $skipReasons['missing_title']++;
+                $errorDetails[] =
+                    "Dòng {$excelRow}: Thiếu nhan đề tài liệu.";
+                continue;
+            }
+
+            // 10.2. Không tự động cắt mã tài liệu
+            $lengthError = $checkLength(
+                $maTaiLieu,
+                30,
+                'Mã tài liệu'
+            );
+
+            if ($lengthError !== null) {
+                $skipReasons['invalid_length']++;
+                $errorDetails[] =
+                    "Dòng {$excelRow}: {$lengthError}.";
+                continue;
+            }
+
+            // 10.3. Kiểm tra độ dài nhan đề
+            $lengthError = $checkLength(
+                $nhanDe,
+                300,
+                'Nhan đề'
+            );
+
+            if ($lengthError !== null) {
+                $skipReasons['invalid_length']++;
+                $errorDetails[] =
+                    "Dòng {$excelRow}: {$lengthError}.";
+                continue;
+            }
+
+            // 10.4. Kiểm tra mã trùng trong file
+            $codeKey = mb_strtolower($maTaiLieu, 'UTF-8');
+
+            if (isset($seenCodes[$codeKey])) {
+                $skipReasons['duplicate_file']++;
+                $errorDetails[] =
+                    "Dòng {$excelRow}: Mã tài liệu {$maTaiLieu} bị trùng trong file.";
+                continue;
+            }
+
+            // Đánh dấu mã đã xuất hiện trong file
+            $seenCodes[$codeKey] = true;
+
+            // 10.5. Kiểm tra mã trùng trong CSDL
+            if (
+                TaiLieu::where('MaTaiLieu', $maTaiLieu)->exists()
+            ) {
+                $skipReasons['duplicate_db']++;
+                $errorDetails[] =
+                    "Dòng {$excelRow}: Mã tài liệu {$maTaiLieu} đã tồn tại trong CSDL.";
+                continue;
+            }
+
+            // 10.6. Lấy các trường dữ liệu
+            $tacGia = $getValue($row, 'TacGia');
+
+            $nhaXuatBan = $getValue($row, 'NhaXuatBan')
+                ?? 'Chưa cập nhật';
+
+            $namXbVal = $getValue($row, 'NamXuatBan');
+
+            $ngonNgu = $getValue($row, 'NgonNgu')
+                ?? 'Tiếng Việt';
+
+            $isbn = $getValue($row, 'ISBN');
+
+            $chuDe = $getValue($row, 'ThuatNguChuDe');
+
+            $moTa = $getValue($row, 'MoTa');
+
+            $noiLuuGiu = $getValue($row, 'NoiLuuGiu')
+                ?? 'Kho tầng 1';
+
+            $trangThai = $getValue($row, 'TrangThaiSuDung')
+                ?? 'Co_San';
+
+            $anhBia = $getValue($row, 'AnhBia');
+
+            // 10.7. Kiểm tra năm xuất bản
+            $namXuatBan = null;
+
+            if ($namXbVal !== null) {
+
+                if (
+                    !preg_match('/^\d{1,4}$/', $namXbVal) ||
+                    (int) $namXbVal < 1000 ||
+                    (int) $namXbVal > (int) date('Y')
+                ) {
+                    $skipReasons['invalid_year']++;
+
+                    $errorDetails[] =
+                        "Dòng {$excelRow}: Năm xuất bản không hợp lệ ({$namXbVal}).";
+
                     continue;
                 }
 
-                try {
-                    $maTaiLieu = $getValue($data, $maDocIdx);
+                $namXuatBan = (int) $namXbVal;
+            }
 
-                    if (empty($maTaiLieu) || in_array(strtolower($maTaiLieu), ['ma_tai_lieu', 'matailieu'])) {
-                        $countSkipped++;
-                        continue;
-                    }
+            // 10.8. Kiểm tra độ dài các trường
+            $lengthChecks = [
+                [$tacGia, 250, 'Tác giả'],
+                [$nhaXuatBan, 150, 'Nhà xuất bản'],
+                [$ngonNgu, 30, 'Ngôn ngữ'],
+                [$isbn, 30, 'ISBN'],
+                [$noiLuuGiu, 150, 'Nơi lưu giữ'],
+                [$trangThai, 50, 'Trạng thái sử dụng'],
+                [$anhBia, 255, 'Ảnh bìa'],
+            ];
 
-                    $safeMaTL = $safeTruncate($maTaiLieu, 50);
+            $lengthError = null;
 
-                    if (TaiLieu::where('ma_tai_lieu', $safeMaTL)->exists()) {
-                        $countSkipped++;
-                        continue;
-                    }
+            foreach ($lengthChecks as [$value, $limit, $label]) {
 
-                    $nhanDe          = $getValue($data, $nhanDeIdx) ?? 'Chưa có nhan đề';
-                    $tacGia          = $safeTruncate($getValue($data, $tacGiaIdx), 250);
-                    $nhaXuatBan      = $safeTruncate($getValue($data, $nxbIdx), 250);
-                    $namXbVal        = $getValue($data, $namXbIdx);
-                    $namXuatBan      = (is_numeric($namXbVal)) ? (int)$namXbVal : (int)date('Y');
-                    $ngonNgu         = $safeTruncate($getValue($data, $ngonNguIdx) ?? 'Tiếng Việt', 50);
-                    $isbn            = $safeTruncate($getValue($data, $isbnIdx), 50);
-                    $thuatNguChuDe   = $getValue($data, $chuDeIdx);
-                    $moTa            = $getValue($data, $moTaIdx);
+                $lengthError = $checkLength(
+                    $value,
+                    $limit,
+                    $label
+                );
 
-                    $rawNoiLuu = $getValue($data, $noiLuuIdx);
-                    if (!empty($rawNoiLuu) && str_contains($rawNoiLuu, '|')) {
-                        $parts = explode('|', $rawNoiLuu);
-                        $noiLuuGiu = trim(end($parts));
-                    } else {
-                        $noiLuuGiu = $rawNoiLuu;
-                    }
-                    $noiLuuGiu = $safeTruncate($noiLuuGiu ?? 'Kho tầng 1', 250);
+                if ($lengthError !== null) {
+                    break;
+                }
+            }
 
-                    $trangThaiSuDung = $getValue($data, $ttSudungIdx) ?? 'Co_San';
-                    $anhBia          = $getValue($data, $anhBiaIdx);
+            if ($lengthError !== null) {
+                $skipReasons['invalid_length']++;
 
-                    if (!empty($trangThaiSuDung) && (str_starts_with($trangThaiSuDung, 'http://') || str_starts_with($trangThaiSuDung, 'https://'))) {
-                        $tempUrl = $trangThaiSuDung;
-                        $trangThaiSuDung = (!empty($anhBia) && !str_starts_with($anhBia, 'http')) ? $anhBia : 'Co_San';
-                        $anhBia = $tempUrl;
-                    }
+                $errorDetails[] =
+                    "Dòng {$excelRow}: {$lengthError}.";
 
-                    $trangThaiSuDung = $safeTruncate($trangThaiSuDung, 30) ?? 'Co_San';
+                continue;
+            }
+
+            // 10.9. Lưu từng dòng bằng transaction riêng
+            try {
+
+                DB::transaction(function () use (
+                    $maTaiLieu,
+                    $nhanDe,
+                    $tacGia,
+                    $nhaXuatBan,
+                    $namXuatBan,
+                    $ngonNgu,
+                    $isbn,
+                    $chuDe,
+                    $moTa,
+                    $noiLuuGiu,
+                    $trangThai,
+                    $anhBia
+                ) {
 
                     TaiLieu::create([
-                        'ma_tai_lieu'        => $safeMaTL,
-                        'nhan_de'            => $nhanDe,
-                        'tac_gia'            => $tacGia,
-                        'nha_xuat_ban'       => $nhaXuatBan,
-                        'nam_xuat_ban'       => $namXuatBan,
-                        'ngon_ngu'           => $ngonNgu,
-                        'isbn'               => $isbn,
-                        'thuat_ngu_chu_de'   => $thuatNguChuDe,
-                        'mo_ta'              => $moTa,
-                        'noi_luu_giu'        => $noiLuuGiu,
-                        'trang_thai_su_dung' => $trangThaiSuDung,
-                        'anh_bia'            => $anhBia,
+                        'MaTaiLieu'        => $maTaiLieu,
+                        'NhanDe'            => $nhanDe,
+                        'TacGia'            => $tacGia,
+                        'NhaXuatBan'       => $nhaXuatBan,
+                        'NamXuatBan'       => $namXuatBan,
+                        'NgonNgu'           => $ngonNgu,
+                        'ISBN'               => $isbn,
+                        'ThuatNguChuDe'   => $chuDe,
+                        'MoTa'              => $moTa,
+                        'NoiLuuGiu'        => $noiLuuGiu,
+                        'TrangThaiSuDung' => $trangThai,
+                        'AnhBia'            => $anhBia,
                     ]);
 
-                    $countSuccess++;
+                });
 
-                } catch (\Exception $rowError) {
-                    $countSkipped++;
-                    continue;
+                $countSuccess++;
+
+            } catch (\Throwable $rowError) {
+
+                report($rowError);
+
+                // Kiểm tra lại để nhận diện lỗi trùng khóa
+                if (
+                    TaiLieu::where('MaTaiLieu', $maTaiLieu)->exists()
+                ) {
+                    $skipReasons['duplicate_db']++;
+
+                    $errorDetails[] =
+                        "Dòng {$excelRow}: Mã tài liệu {$maTaiLieu} đã tồn tại trong CSDL.";
+                } else {
+                    $skipReasons['database_error']++;
+
+                    $errorDetails[] =
+                        "Dòng {$excelRow}: Không thể lưu dữ liệu. Vui lòng kiểm tra cấu trúc CSDL hoặc log Laravel.";
                 }
             }
-
-            DB::commit();
-
-            return redirect()->back()->with('success', "Xử lý tệp hoàn tất: Đã nhập thành công {$countSuccess} bản ghi mới, bỏ qua {$countSkipped} dòng (bị trùng hoặc lỗi dữ liệu)!");
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi xử lý tệp: ' . $e->getMessage());
         }
+
+        // 11. Tổng hợp kết quả
+        $countSkipped = array_sum($skipReasons);
+
+        $message = "Import hoàn tất: Thành công {$countSuccess} tài liệu mới, "
+            . "bỏ qua {$countSkipped} dòng không hợp lệ hoặc bị trùng.";
+
+        return redirect()->back()
+            ->with('success', $message)
+            ->with('import_summary', $skipReasons)
+            ->with('import_details', $errorDetails);
+
+    } catch (\Throwable $e) {
+
+        report($e);
+
+        return redirect()->back()->with(
+            'error',
+            'Không thể xử lý file dữ liệu. Vui lòng kiểm tra định dạng file và cấu trúc bảng!'
+        );
     }
+}
 
     // Hiển thị danh sách mượn trả
     public function borrowIndex()
     {
-        $borrowList = MuonTra::with(['taiLieu', 'sinhVien'])->orderBy('ngay_muon', 'desc')->paginate(10);
+        $borrowList = MuonTra::with(['taiLieu', 'sinhVien'])->orderBy('NgayMuon', 'desc')->paginate(10);
         return view('admin.library.borrow', compact('borrowList'));
     }
 
@@ -268,17 +567,17 @@ class AdminLibraryController extends Controller
     public function borrowStore(Request $request)
     {
         $request->validate([
-            'mssv'        => 'required',
-            'ma_tai_lieu' => 'required',
+            'MSSV'        => 'required',
+            'MaTaiLieu' => 'required',
         ]);
 
         MuonTra::create([
-            'ma_giao_dich' => 'GD_' . time(),
-            'mssv'         => $request->mssv,
-            'ma_tai_lieu'   => $request->ma_tai_lieu,
-            'ngay_muon'    => now(),
-            'trang_thai'   => 'DangMuon',
-            'ghi_chu'      => $request->ghi_chu
+            'MaGiaoDich' => 'GD_' . time(),
+            'MSSV'         => $request->MSSV,
+            'MaTaiLieu'   => $request->MaTaiLieu,
+            'NgayMuon'    => now(),
+            'TrangThai'   => 'DangMuon',
+            'GhiChu'      => $request->GhiChu
         ]);
 
         return redirect()->back()->with('success', 'Tạo phiếu mượn tài liệu thành công!');
@@ -289,8 +588,8 @@ class AdminLibraryController extends Controller
     {
         $borrow = MuonTra::findOrFail($id);
         $borrow->update([
-            'ngay_tra'   => now(),
-            'trang_thai' => 'DaTra'
+            'NgayTra'   => now(),
+            'TrangThai' => 'DaTra'
         ]);
         return redirect()->back()->with('success', 'Đã cập nhật trạng thái trả sách thành công!');
     }

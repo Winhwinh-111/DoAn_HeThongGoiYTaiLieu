@@ -78,7 +78,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="studentMenu" style="min-width: 230px;">
                             <li class="px-3 py-2 border-bottom bg-light">
                                 <small class="text-muted d-block">Mã số sinh viên</small>
-                                <strong class="text-dark">{{ session('mssv', 'N/A') }}</strong>
+                                <strong class="text-dark">{{ session('MSSV', 'N/A') }}</strong>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{{ route('profile') }}">
@@ -151,26 +151,26 @@
                             <!-- NÚT BỎ ĐÁNH DẤU -->
                             <form action="{{ route('bookmark.toggle') }}" method="POST" class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
                                 @csrf
-                                <input type="hidden" name="ma_tai_lieu" value="{{ $book->ma_tai_lieu }}">
+                                <input type="hidden" name="ma_tai_lieu" value="{{ $book->MaTaiLieu }}">
                                 <button type="submit" class="btn btn-sm btn-warning text-dark shadow-sm rounded-circle p-1" style="width: 32px; height: 32px;" title="Bỏ đánh dấu">
                                     <i class="bi bi-bookmark-star-fill"></i>
                                 </button>
                             </form>
 
-                            <div class="text-center p-3 bg-light border-bottom cursor-pointer" style="height: 220px;" data-bs-toggle="modal" data-bs-target="#bookModal-{{ $book->ma_tai_lieu }}">
-                                <img src="{{ $book->anh_bia }}" class="img-fluid h-100 rounded shadow-sm" alt="Bìa sách" style="object-fit: contain;">
+                            <div class="text-center p-3 bg-light border-bottom cursor-pointer" style="height: 220px;" data-bs-toggle="modal" data-bs-target="#bookModal-{{ $book->MaTaiLieu }}">
+                                <img src="{{ $book->AnhBia }}" class="img-fluid h-100 rounded shadow-sm" alt="Bìa sách" style="object-fit: contain;">
                             </div>
                             <div class="card-body d-flex flex-column p-3">
-                                <h6 class="card-title fw-bold text-dark fs-7 text-truncate-2 mb-2" style="height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="{{ $book->nhan_de }}">
-                                    {{ $book->nhan_de }}
+                                <h6 class="card-title fw-bold text-dark fs-7 text-truncate-2 mb-2" style="height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="{{ $book->NhanDe }}">
+                                    {{ $book->NhanDe }}
                                 </h6>
-                                <p class="card-text fs-8 text-muted mb-1"><i class="bi bi-person me-1"></i>{{ $book->tac_gia ?? 'Nhiều tác giả' }}</p>
-                                <p class="card-text fs-8 text-secondary mb-2"><i class="bi bi-geo-alt me-1"></i>{{ $book->noi_luu_giu }}</p>
+                                <p class="card-text fs-8 text-muted mb-1"><i class="bi bi-person me-1"></i>{{ $book->TacGia ?? 'Nhiều tác giả' }}</p>
+                                <p class="card-text fs-8 text-secondary mb-2"><i class="bi bi-geo-alt me-1"></i>{{ $book->NoiLuuGiu }}</p>
                                 <p class="card-text fs-8 text-warning mb-3">
-                                    <i class="bi bi-clock me-1"></i>{{ !empty($book->thoi_diem_danh_dau) ? date('H:i d/m/Y', strtotime($book->thoi_diem_danh_dau)) : '' }}
+                                    <i class="bi bi-clock me-1"></i>{{ !empty($book->ThoiDiemDanhDau) ? date('H:i d/m/Y', strtotime($book->ThoiDiemDanhDau)) : '' }}
                                 </p>
                                 <div class="mt-auto d-grid gap-2">
-                                    <button class="btn btn-sm btn-outline-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#bookModal-{{ $book->ma_tai_lieu }}">
+                                    <button class="btn btn-sm btn-outline-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#bookModal-{{ $book->MaTaiLieu }}">
                                         <i class="bi bi-journal-bookmark me-1"></i>Xem Chi tiết
                                     </button>
                                 </div>
@@ -179,7 +179,7 @@
                     </div>
 
                     <!-- MODAL CHI TIẾT SÁCH (UC05) -->
-                    <div class="modal fade" id="bookModal-{{ $book->ma_tai_lieu }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal fade" id="bookModal-{{ $book->MaTaiLieu }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content border-0 shadow-lg" style="border-top: 5px solid #a71d2a; border-radius: 12px;">
                                 <div class="modal-header border-0 pb-0">
@@ -191,7 +191,7 @@
                                 <div class="modal-body p-4">
                                     <div class="row g-4">
                                         <div class="col-md-4 text-center border-end">
-                                            <img src="{{ $book->anh_bia }}" class="img-fluid rounded shadow-sm mb-3" style="max-height: 300px; object-fit: contain;" alt="{{ $book->nhan_de }}">
+                                            <img src="{{ $book->AnhBia }}" class="img-fluid rounded shadow-sm mb-3" style="max-height: 300px; object-fit: contain;" alt="{{ $book->NhanDe }}">
                                         </div>
                                         <div class="col-md-8">
                                             <div class="table-responsive">
@@ -199,38 +199,38 @@
                                                     <tbody>
                                                         <tr>
                                                             <th>Mã tài liệu</th>
-                                                            <td class="fw-bold text-danger">{{ $book->ma_tai_lieu }}</td>
+                                                            <td class="fw-bold text-danger">{{ $book->MaTaiLieu }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Nhan đề sách</th>
-                                                            <td class="fw-bold text-dark">{{ $book->nhan_de }}</td>
+                                                            <td class="fw-bold text-dark">{{ $book->NhanDe }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Tác giả</th>
-                                                            <td>{{ $book->tac_gia ?? 'Nhiều tác giả' }}</td>
+                                                            <td>{{ $book->TacGia ?? 'Nhiều tác giả' }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Nhà xuất bản</th>
-                                                            <td>{{ $book->nha_xuat_ban ?? 'Chưa cập nhật' }}</td>
+                                                            <td>{{ $book->NhaXuatBan ?? 'Chưa cập nhật' }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Năm xuất bản</th>
-                                                            <td>{{ $book->nam_xuat_ban ?? 'N/A' }}</td>
+                                                            <td>{{ $book->NamXuatBan ?? 'N/A' }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Ngôn ngữ</th>
-                                                            <td>{{ $book->ngon_ngu ?? 'Tiếng Việt' }}</td>
+                                                            <td>{{ $book->NgonNgu ?? 'Tiếng Việt' }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Mã ISBN</th>
-                                                            <td>{{ $book->isbn ?? 'N/A' }}</td>
+                                                            <td>{{ $book->ISBN ?? 'N/A' }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Thuật ngữ / Chủ đề</th>
                                                             <td>
-                                                                @if(!empty($book->thuat_ngu_chu_de))
+                                                                @if(!empty($book->ThuatNguChuDe))
                                                                     <div class="d-flex flex-column gap-1">
-                                                                        @foreach(array_filter(array_map('trim', explode(',', $book->thuat_ngu_chu_de))) as $term)
+                                                                        @foreach(array_filter(array_map('trim', explode(',', $book->ThuatNguChuDe))) as $term)
                                                                             <div class="text-dark">
                                                                                 <i class="bi bi-tag-fill text-danger me-1 fs-8"></i>{{ $term }}
                                                                             </div>
@@ -245,18 +245,18 @@
                                                             <th>Học phần liên quan</th>
                                                             <td>
                                                                 @php
-                                                                    $relCourses = \App\Models\HocPhan::join('DeCuongHocPhan', 'HocPhan.ma_hoc_phan', '=', 'DeCuongHocPhan.ma_hoc_phan')
-                                                                        ->where('DeCuongHocPhan.ma_tai_lieu', $book->ma_tai_lieu)
-                                                                        ->select('HocPhan.*', 'DeCuongHocPhan.loai_tai_lieu')
+                                                                    $relCourses = \App\Models\HocPhan::join('DeCuongHocPhan', 'HocPhan.MaHocPhan', '=', 'DeCuongHocPhan.MaHocPhan')
+                                                                        ->where('DeCuongHocPhan.MaTaiLieu', $book->MaTaiLieu)
+                                                                        ->select('HocPhan.*', 'DeCuongHocPhan.LoaiTaiLieu')
                                                                         ->get();
                                                                 @endphp
                                                                 @if(count($relCourses) > 0)
                                                                     @foreach($relCourses as $hp)
                                                                         <div class="mb-1">
                                                                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">
-                                                                                <i class="bi bi-book me-1"></i>[{{ $hp->ma_hoc_phan }}] {{ $hp->ten_hoc_phan }}
+                                                                                <i class="bi bi-book me-1"></i>[{{ $hp->MaHocPhan }}] {{ $hp->TenHocPhan }}
                                                                             </span>
-                                                                            <small class="text-muted fs-8">({{ $hp->loai_tai_lieu === 'GiaoTrinhChinh' ? 'Giáo trình chính' : 'Tham khảo' }})</small>
+                                                                            <small class="text-muted fs-8">({{ $hp->LoaiTaiLieu === 'GiaoTrinhChinh' ? 'Giáo trình chính' : 'Tham khảo' }})</small>
                                                                         </div>
                                                                     @endforeach
                                                                 @else
@@ -266,19 +266,19 @@
                                                         </tr>
                                                         <tr>
                                                             <th>Nơi lưu giữ</th>
-                                                            <td class="text-primary fw-semibold"><i class="bi bi-geo-alt me-1"></i>{{ $book->noi_luu_giu ?? 'Thư viện HUB' }}</td>
+                                                            <td class="text-primary fw-semibold"><i class="bi bi-geo-alt me-1"></i>{{ $book->NoiLuuGiu ?? 'Thư viện HUB' }}</td>
                                                         </tr>
                                                         <tr>
                                                             <th>Trạng thái sử dụng</th>
                                                             <td>
                                                                 <span class="badge bg-success-subtle text-success border border-success px-2 py-1 fw-normal">
-                                                                    {{ $book->trang_thai_su_dung ?? 'Sẵn sàng phục vụ' }}
+                                                                    {{ $book->TrangThaiSuDung ?? 'Sẵn sàng phục vụ' }}
                                                                 </span>
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <th>Mô tả nội dung</th>
-                                                            <td class="text-muted fs-8">{{ $book->mo_ta ?? 'Chưa có mô tả chi tiết.' }}</td>
+                                                            <td class="text-muted fs-8">{{ $book->MoTa ?? 'Chưa có mô tả chi tiết.' }}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -289,7 +289,7 @@
                                 <div class="modal-footer border-top pt-2">
                                     <form action="{{ route('bookmark.toggle') }}" method="POST" class="m-0">
                                         @csrf
-                                        <input type="hidden" name="ma_tai_lieu" value="{{ $book->ma_tai_lieu }}">
+                                        <input type="hidden" name="MaTaiLieu" value="{{ $book->MaTaiLieu }}">
                                         <button type="submit" class="btn btn-sm btn-warning fw-semibold fs-8">
                                             <i class="bi bi-bookmark-star-fill me-1"></i>Đã đánh dấu (Bỏ đánh dấu)
                                         </button>

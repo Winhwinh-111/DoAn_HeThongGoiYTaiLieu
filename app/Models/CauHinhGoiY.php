@@ -7,27 +7,27 @@ use Illuminate\Database\Eloquent\Model;
 class CauHinhGoiY extends Model
 {
     protected $table = 'CauHinhGoiY';
-    protected $primaryKey = 'ma_cau_hinh';
+    protected $primaryKey = 'MaCauHinh';
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = true;
 
     protected $fillable = [
-        'ma_cau_hinh',
-        'ma_tai_khoan',
-        'top_n',
-        'nguong_cosine',
-        'created_at',
+        'MaCauHinh',
+        'MaTaiKhoan',
+        'TopN',
+        'NguongCosine',
+        'Created_at',
         'updated_at'
     ];
 
     public function taiKhoan()
     {
-        return $this->belongsTo(TaiKhoan::class, 'ma_tai_khoan', 'ma_tai_khoan');
+        return $this->belongsTo(TaiKhoan::class, 'MaTaiKhoan', 'MaTaiKhoan');
     }
 
     public function moHinhGoiYs()
     {
-        return $this->hasMany(MoHinhGoiY::class, 'ma_cau_hinh', 'ma_cau_hinh');
+        return $this->hasMany(MoHinhGoiY::class, 'MaCauHinh', 'MaCauHinh');
     }
 }

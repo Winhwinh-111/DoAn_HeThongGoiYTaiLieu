@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Thống kê Hệ thống')
-@section('page_title', 'BẢNG ĐIỀU KHIỂN & THỐNG KÊ HỆ THỐNG ĐÀO TẠO')
+@section('page_title', 'THỐNG KÊ TỔNG QUAN HỆ THỐNG')
 
 @section('content')
 
@@ -23,8 +23,8 @@
             <h6 class="fw-bold text-dark border-bottom pb-2"><i class="bi bi-cpu me-2 text-primary"></i>LỊCH SỬ MÔ HÌNH GỢI Ý</h6>
             <div class="mt-3 fs-7">
                 <p class="mb-2 d-flex justify-content-between"><span>Tổng số phiên bản mô hình:</span> <strong>{{ $totalModels }}</strong></p>
-                <p class="mb-2 d-flex justify-content-between"><span>Mô hình đang hoạt động:</span> <strong class="text-success">{{ $activeModel->ma_mo_hinh ?? 'N/A' }}</strong></p>
-                <p class="mb-0 d-flex justify-content-between"><span>Thời điểm tạo mô hình:</span> <strong>{{ $activeModel ? date('d/m/Y H:i', strtotime($activeModel->thoi_diem_tao)) : 'N/A' }}</strong></p>
+                <p class="mb-2 d-flex justify-content-between"><span>Mô hình đang hoạt động:</span> <strong class="text-success">{{ $activeModel->MaMoHinh ?? 'N/A' }}</strong></p>
+                <p class="mb-0 d-flex justify-content-between"><span>Thời điểm tạo mô hình:</span> <strong>{{ $activeModel ? date('d/m/Y H:i', strtotime($activeModel->ThoiDiemTao)) : 'N/A' }}</strong></p>
             </div>
         </div>
     </div>

@@ -35,33 +35,33 @@ class HomeController extends Controller
         $category = $request->get('category', 'Tất cả danh mục');
 
         // Lấy danh sách 6 Từ khóa nổi bật được tìm kiếm nhiều nhất
-        $topKeywords = LichSuTimKiem::select('tu_khoa', DB::raw('count(*) as total'))
-            ->groupBy('tu_khoa')
+        $topKeywords = LichSuTimKiem::select('TuKhoa', DB::raw('count(*) as total'))
+            ->groupBy('TuKhoa')
             ->orderBy('total', 'desc')
             ->limit(6)
-            ->pluck('tu_khoa');
+            ->pluck('TuKhoa');
 
         // Check trạng thái đăng nhập của sinh viên
         if (Session::has('user_id') && Session::get('role') === 'SinhVien') {
-            $mssv = Session::get('mssv');
+            $mssv = Session::get('MSSV');
             $sinhVien = SinhVien::find($mssv);
 
             // Lấy danh sách mã tài liệu mà sinh viên đã đánh dấu
-            $markedBookIds = DanhDau::where('mssv', $mssv)->pluck('ma_tai_lieu')->toArray();
+            $markedBookIds = DanhDau::where('MSSV', $mssv)->pluck('MaTaiLieu')->toArray();
 
             // Ghi nhận lịch sử tìm kiếm vào CSDL
             if (!empty($keyword)) {
                 LichSuTimKiem::create([
-                    'ma_tim_kiem'       => 'SK_' . time() . '_' . rand(100, 999),
-                    'mssv'              => $mssv,
-                    'tu_khoa'           => $keyword,
-                    'thoi_diem_tim_kiem' => now(),
+                    'MaLuotTimKiem'       => 'SK_' . time() . '_' . rand(100, 999),
+                    'MSSV'              => $mssv,
+                    'TuKhoa'           => $keyword,
+                    'ThoiDiemTimKiem' => now(),
                 ]);
             }
 
             // Gọi gợi ý tài liệu cá nhân hóa (Tự động lấy tham số Top-N & Ngưỡng từ CSDL)
             if ($sinhVien) {
-                $hasActiveCourses = $sinhVien->hocPhans()->where('trang_thai', 'DangHoc')->exists();
+                $hasActiveCourses = $sinhVien->hocPhans()->where('TrangThai', 'DangHoc')->exists();
                 $isSuggestedByMajor = !$hasActiveCourses;
 
                 $recommendedBooks = $this->recommendationService->getRecommendationsForStudent($mssv);
@@ -71,19 +71,19 @@ class HomeController extends Controller
         if (!empty($keyword)) {
             $query = TaiLieu::query();
             $query->where(function ($q) use ($keyword) {
-                $q->where('nhan_de', 'LIKE', "%{$keyword}%")
-                  ->orWhere('tac_gia', 'LIKE', "%{$keyword}%")
-                  ->orWhere('thuat_ngu_chu_de', 'LIKE', "%{$keyword}%")
-                  ->orWhere('mo_ta', 'LIKE', "%{$keyword}%");
+                $q->where('NhanDe', 'LIKE', "%{$keyword}%")
+                  ->orWhere('TacGia', 'LIKE', "%{$keyword}%")
+                  ->orWhere('ThuatNguChuDe', 'LIKE', "%{$keyword}%")
+                  ->orWhere('MoTa', 'LIKE', "%{$keyword}%");
             });
 
             // Lọc thêm theo Danh mục
             if ($category === 'Sách in') {
-                $query->where('ma_tai_lieu', 'LIKE', 'HUB%');
+                $query->where('MaTaiLieu', 'LIKE', 'HUB%');
             } elseif ($category === 'Sách điện tử') {
-                $query->where('ma_tai_lieu', 'LIKE', 'TLE%');
+                $query->where('MaTaiLieu', 'LIKE', 'TLE%');
             } elseif ($category === 'Đề cương HP') {
-                $query->where('ma_tai_lieu', 'LIKE', 'DC%');
+                $query->where('MaTaiLieu', 'LIKE', 'DC%');
             }
 
             $searchResults = $query->paginate(12)->appends(request()->query());
@@ -112,11 +112,11 @@ class HomeController extends Controller
             return response()->json([]);
         }
 
-        $suggestions = LichSuTimKiem::select('tu_khoa')
-            ->where('tu_khoa', 'LIKE', "%{$query}%")
+        $suggestions = LichSuTimKiem::select('TuKhoa')
+            ->where('TuKhoa', 'LIKE', "%{$query}%")
             ->distinct()
             ->limit(5)
-            ->pluck('tu_khoa');
+            ->pluck('TuKhoa');
 
         return response()->json($suggestions);
     }
@@ -130,16 +130,16 @@ class HomeController extends Controller
         $userFeedback = null;
 
         if (Session::has('user_id') && Session::get('role') === 'SinhVien') {
-            $mssv = Session::get('mssv');
-            $isMarked = DanhDau::where('mssv', $mssv)->where('ma_tai_lieu', $id)->exists();
-            $userFeedback = PhanHoi::where('mssv', $mssv)->where('ma_tai_lieu', $id)->first();
+            $mssv = Session::get('MSSV');
+            $isMarked = DanhDau::where('MSSV', $mssv)->where('MaTaiLieu', $id)->exists();
+            $userFeedback = PhanHoi::where('MSSV', $mssv)->where('MaTaiLieu', $id)->first();
         }
 
         // Truy xuất danh sách các Học phần liên quan qua bảng DeCuongHocPhan
         $relatedCourses = DB::table('DeCuongHocPhan')
-            ->join('HocPhan', 'DeCuongHocPhan.ma_hoc_phan', '=', 'HocPhan.ma_hoc_phan')
-            ->where('DeCuongHocPhan.ma_tai_lieu', $id)
-            ->select('HocPhan.*', 'DeCuongHocPhan.noi_dung_de_cuong', 'DeCuongHocPhan.loai_tai_lieu')
+            ->join('HocPhan', 'DeCuongHocPhan.MaHocPhan', '=', 'HocPhan.MaHocPhan')
+            ->where('DeCuongHocPhan.MaTaiLieu', $id)
+            ->select('HocPhan.*', 'DeCuongHocPhan.NoiDungDeCuong', 'DeCuongHocPhan.LoaiTaiLieu')
             ->get();
 
         return view('document_detail', compact('book', 'isMarked', 'userFeedback', 'relatedCourses'));
@@ -152,20 +152,20 @@ class HomeController extends Controller
             return redirect()->back()->withErrors(['error' => 'Vui lòng đăng nhập tài khoản Sinh viên để sử dụng chức năng đánh dấu!']);
         }
 
-        $mssv = Session::get('mssv');
-        $maTaiLieu = $request->input('ma_tai_lieu');
+        $mssv = Session::get('MSSV');
+        $maTaiLieu = $request->input('MaTaiLieu');
 
-        $danhDau = DanhDau::where('mssv', $mssv)->where('ma_tai_lieu', $maTaiLieu)->first();
+        $danhDau = DanhDau::where('MSSV', $mssv)->where('MaTaiLieu', $maTaiLieu)->first();
 
         if ($danhDau) {
             $danhDau->delete();
             return redirect()->back()->with('success', 'Đã bỏ đánh dấu tài liệu khỏi danh sách yêu thích!');
         } else {
             DanhDau::create([
-                'ma_danh_dau'        => 'DD_' . time() . '_' . rand(10, 99),
-                'mssv'               => $mssv,
-                'ma_tai_lieu'        => $maTaiLieu,
-                'thoi_diem_danh_dau' => now(),
+                'MaDanhDau'        => 'DD_' . time() . '_' . rand(10, 99),
+                'MSSV'               => $mssv,
+                'MaTaiLieu'        => $maTaiLieu,
+                'ThoiDiemDanhDau' => now(),
             ]);
             return redirect()->back()->with('success', 'Đã đánh dấu tài liệu vào danh sách yêu thích!');
         }
@@ -178,13 +178,13 @@ class HomeController extends Controller
             return redirect()->route('login');
         }
 
-        $mssv = Session::get('mssv');
+        $mssv = Session::get('MSSV');
         $sinhVien = SinhVien::find($mssv);
 
-        $markedBooks = TaiLieu::join('DanhDau', 'TaiLieu.ma_tai_lieu', '=', 'DanhDau.ma_tai_lieu')
-            ->where('DanhDau.mssv', $mssv)
-            ->orderBy('DanhDau.thoi_diem_danh_dau', 'desc')
-            ->select('TaiLieu.*', 'DanhDau.thoi_diem_danh_dau')
+        $markedBooks = TaiLieu::join('DanhDau', 'TaiLieu.MaTaiLieu', '=', 'DanhDau.MaTaiLieu')
+            ->where('DanhDau.MSSV', $mssv)
+            ->orderBy('DanhDau.ThoiDiemDanhDau', 'desc')
+            ->select('TaiLieu.*', 'DanhDau.ThoiDiemDanhDau')
             ->get();
 
         return view('bookmarks', compact('sinhVien', 'markedBooks'));
@@ -197,16 +197,16 @@ class HomeController extends Controller
             return redirect()->back()->withErrors(['error' => 'Vui lòng đăng nhập để gửi đánh giá!']);
         }
 
-        $mssv = Session::get('mssv');
-        $maTaiLieu = $request->input('ma_tai_lieu');
-        $mucDanhGia = $request->input('muc_danh_gia', 'PhuHop');
+        $mssv = Session::get('MSSV');
+        $maTaiLieu = $request->input('MaTaiLieu');
+        $mucDanhGia = $request->input('MucDanhGia', 'PhuHop');
 
         PhanHoi::updateOrCreate(
-            ['mssv' => $mssv, 'ma_tai_lieu' => $maTaiLieu],
+            ['MSSV' => $mssv, 'MaTaiLieu' => $maTaiLieu],
             [
-                'ma_phan_hoi'  => 'PH_' . time() . '_' . rand(10, 99),
-                'muc_danh_gia' => $mucDanhGia,
-                'thoi_diem'    => now()
+                'MaPhanHoi'  => 'PH_' . time() . '_' . rand(10, 99),
+                'MucDanhGia' => $mucDanhGia,
+                'ThoiDiem'    => now()
             ]
         );
 
@@ -220,7 +220,7 @@ class HomeController extends Controller
             return redirect()->route('login');
         }
 
-        $mssv = Session::get('mssv');
+        $mssv = Session::get('MSSV');
         $sinhVien = SinhVien::with(['hocPhans', 'nganh'])->find($mssv);
 
         return view('profile', compact('sinhVien'));
@@ -233,12 +233,12 @@ class HomeController extends Controller
             return redirect()->route('login');
         }
 
-        $mssv = Session::get('mssv');
+        $mssv = Session::get('MSSV');
         $sinhVien = SinhVien::find($mssv);
 
         $lichSuMuon = \App\Models\MuonTra::with('taiLieu')
-            ->where('mssv', $mssv)
-            ->orderBy('ngay_muon', 'desc')
+            ->where('MSSV', $mssv)
+            ->orderBy('NgayMuon', 'desc')
             ->get();
 
         return view('history', compact('sinhVien', 'lichSuMuon'));

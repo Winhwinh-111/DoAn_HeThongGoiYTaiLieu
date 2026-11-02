@@ -62,7 +62,7 @@
                 <label class="form-label fs-7 fw-semibold text-secondary">Tài khoản (MSSV):</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
-                    <input type="text" name="ten_dang_nhap" class="form-control" placeholder="Nhập tài khoản" required value="030238000001">
+                    <input type="text" name="TenDangNhap" class="form-control" placeholder="Nhập tài khoản">
                 </div>
             </div>
 
@@ -71,7 +71,7 @@
                 <label class="form-label fs-7 fw-semibold text-secondary">Mật khẩu:</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
-                    <input type="password" name="mat_khau" class="form-control" placeholder="Nhập mật khẩu" required value="Hub123456">
+                    <input type="password" name="MatKhau" class="form-control" placeholder="Nhập mật khẩu" >
                 </div>
             </div>
 

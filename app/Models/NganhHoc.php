@@ -16,6 +16,6 @@ class NganhHoc extends Model
 
     public function hocPhans()
     {
-        return $this->belongsToMany(HocPhan::class, 'ChuongTrinhDaoTao', 'ma_nganh', 'ma_hoc_phan');
+        return $this->belongsToMany(HocPhan::class, 'ChuongTrinhDaoTao', 'MaNganh', 'MaHocPhan');
     }
 }

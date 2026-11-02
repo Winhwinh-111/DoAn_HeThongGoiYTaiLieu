@@ -35,12 +35,11 @@
                     <label class="form-label fw-semibold">1. Chọn loại dữ liệu cần nhập (*):</label>
                     <select name="data_type" class="form-select form-select-sm" required>
                         <option value="">-- Chọn loại dữ liệu --</option>
-                        <option value="sinh_vien">Danh sách Sinh viên</option>
-                        <option value="hoc_phan">Danh mục Học phần</option>
-                        <option value="nganh_hoc">Danh mục Ngành học</option>
-                        <option value="de_cuong_hoc_phan">Đề cương Học phần</option>
-                        <option value="chuong_trinh_dao_tao">Chương trình Đào tạo</option>
-                        <option value="sinh_vien_hoc_phan">Danh sách Sinh viên - Học phần</option>
+                        <option value="SinhVien">Danh sách Sinh viên</option>
+                        <option value="HocPhan">Danh mục Học phần</option>
+                        <option value="NganhHoc">Danh mục Ngành học</option>
+                        <option value="DeCuongHocPhan">Đề cương Học phần</option>
+                        <option value="SinhVienHocPhan">Danh sách Sinh viên - Học phần</option>
                     </select>
                 </div>
 

@@ -7,16 +7,16 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class TaiKhoan extends Authenticatable
 {
     protected $table = 'TaiKhoan';
-    protected $primaryKey = 'ma_tai_khoan';
+    protected $primaryKey = 'MaTaiKhoan';
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['ma_tai_khoan', 'ten_dang_nhap', 'mat_khau', 'vai_tro', 'ngay_tao'];
-    protected $hidden = ['mat_khau'];
+    protected $fillable = ['MaTaiKhoan', 'TenDangNhap', 'MatKhau', 'VaiTro', 'NgayTao'];
+    protected $hidden = ['MatKhau'];
 
     public function sinhVien()
     {
-        return $this->hasOne(SinhVien::class, 'ma_tai_khoan', 'ma_tai_khoan');
+        return $this->hasOne(SinhVien::class, 'MaTaiKhoan', 'MaTaiKhoan');
     }
 }

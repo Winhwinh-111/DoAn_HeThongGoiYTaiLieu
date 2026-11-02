@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class HocPhan extends Model
 {
     protected $table = 'HocPhan';
-    protected $primaryKey = 'ma_hoc_phan';
+    protected $primaryKey = 'MaHocPhan';
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
@@ -17,6 +17,6 @@ class HocPhan extends Model
 
     public function nganh()
     {
-        return $this->belongsToMany(NganhHoc::class, 'ChuongTrinhDaoTao', 'ma_hoc_phan', 'ma_nganh');
+        return $this->belongsToMany(NganhHoc::class, 'ChuongTrinhDaoTao', 'MaHocPhan', 'MaNganh');
     }
 }

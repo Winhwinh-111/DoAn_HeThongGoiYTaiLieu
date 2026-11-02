@@ -61,33 +61,33 @@
                                         <th class="bg-light text-secondary fw-semibold" style="width: 35%;">
                                             <i class="bi bi-card-heading text-danger me-2"></i>Mã số sinh viên (MSSV)
                                         </th>
-                                        <td class="fw-bold text-danger fs-6">{{ $sinhVien->mssv ?? 'N/A' }}</td>
+                                        <td class="fw-bold text-danger fs-6">{{ $sinhVien->MSSV ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th class="bg-light text-secondary fw-semibold">
                                             <i class="bi bi-person text-primary me-2"></i>Họ và tên
                                         </th>
-                                        <td class="fw-bold text-dark">{{ $sinhVien->ho_ten ?? 'N/A' }}</td>
+                                        <td class="fw-bold text-dark">{{ $sinhVien->HoTen ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th class="bg-light text-secondary fw-semibold">
                                             <i class="bi bi-calendar-event text-primary me-2"></i>Ngày sinh
                                         </th>
                                         <td>
-                                            {{ $sinhVien->ngay_sinh ? date('d/m/Y', strtotime($sinhVien->ngay_sinh)) : 'N/A' }}
+                                            {{ $sinhVien->NgaySinh ? date('d/m/Y', strtotime($sinhVien->NgaySinh)) : 'N/A' }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <th class="bg-light text-secondary fw-semibold">
                                             <i class="bi bi-gender-ambiguous text-primary me-2"></i>Giới tính
                                         </th>
-                                        <td>{{ $sinhVien->gioi_tinh ?? 'N/A' }}</td>
+                                        <td>{{ $sinhVien->GioiTinh ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th class="bg-light text-secondary fw-semibold">
                                             <i class="bi bi-telephone text-primary me-2"></i>Số điện thoại
                                         </th>
-                                        <td>{{ $sinhVien->so_dien_thoai ?? 'Chưa cập nhật' }}</td>
+                                        <td>{{ $sinhVien->SoDienThoai ?? 'Chưa cập nhật' }}</td>
                                     </tr>
                                     <tr>
                                         <th class="bg-light text-secondary fw-semibold">
@@ -96,7 +96,7 @@
                                         <td>
                                             <span class="badge bg-light text-dark border border-secondary px-2 py-1">
                                                 <i class="bi bi-clock me-1 text-danger"></i>
-                                                {{ $sinhVien->han_the ? date('d/m/Y', strtotime($sinhVien->han_the)) : 'N/A' }}
+                                                {{ $sinhVien->HanThe ? date('d/m/Y', strtotime($sinhVien->HanThe)) : 'N/A' }}
                                             </span>
                                         </td>
                                     </tr>
@@ -105,7 +105,7 @@
                                             <i class="bi bi-journal-bookmark text-primary me-2"></i>Mã ngành đào tạo
                                         </th>
                                         <td>
-                                            <span class="badge bg-primary px-2 py-1">{{ $sinhVien->ma_nganh ?? 'N/A' }}</span>
+                                            <span class="badge bg-primary px-2 py-1">{{ $sinhVien->MaNganh ?? 'N/A' }}</span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -113,7 +113,7 @@
                                             <i class="bi bi-building text-primary me-2"></i>Tên ngành đào tạo
                                         </th>
                                         <td>
-                                            {{ $sinhVien->nganh->ten_nganh ?? 'Tài chính - Ngân hàng' }}
+                                            {{ $sinhVien->nganh->TenNganh ?? 'Tài chính - Ngân hàng' }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -144,12 +144,12 @@
                                     @if($sinhVien && $sinhVien->hocPhans->count() > 0)
                                         @foreach($sinhVien->hocPhans as $hp)
                                             <tr>
-                                                <td class="fw-bold text-primary">{{ $hp->ma_hoc_phan }}</td>
-                                                <td>{{ $hp->ten_hoc_phan }}</td>
-                                                <td>{{ $hp->so_tin_chi ?? '-' }}</td>
+                                                <td class="fw-bold text-primary">{{ $hp->MaHocPhan }}</td>
+                                                <td>{{ $hp->TenHocPhan }}</td>
+                                                <td>{{ $hp->SoTinChi ?? '-' }}</td>
                                                 <td>
                                                     @php
-                                                        $trangThai = $hp->pivot->trang_thai ?? 'DangHoc';
+                                                        $trangThai = $hp->pivot->TrangThai ?? 'DangHoc';
                                                     @endphp
 
                                                     @if($trangThai === 'DaHoanThanh')

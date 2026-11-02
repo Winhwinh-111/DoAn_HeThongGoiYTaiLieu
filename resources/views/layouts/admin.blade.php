@@ -95,23 +95,23 @@
                         <div class="d-flex align-items-center" style="cursor: pointer;">
                             <div class="text-end me-2">
                                 <div class="fw-bold fs-6 text-dark">
-                                    {{ Auth::user()->ho_ten ?? session('admin_name', 'Chưa cập nhật') }}
+                                    {{ Auth::user()->HoTen ?? session('admin_name', 'Chưa cập nhật') }}
                                 </div>
                                 <div class="fs-8 text-muted">
-                                    {{ Auth::user()->vai_tro ?? session('role', 'Chưa phân quyền') }}
+                                    {{ Auth::user()->VaiTro ?? session('role', 'Chưa phân quyền') }}
                                 </div>
                             </div>
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->ho_ten ?? session('admin_name', 'Admin')) }}&background=0D8ABC&color=fff" alt="Avatar" class="rounded-circle shadow-sm" width="40" height="40">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->HoTen ?? session('admin_name', 'Admin')) }}&background=0D8ABC&color=fff" alt="Avatar" class="rounded-circle shadow-sm" width="40" height="40">
                         </div>
 
                         <!-- 2. Bảng thông tin chi tiết hiện khi Hover (Lấy 100% từ DB) -->
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-3 mt-1" style="min-width: 270px; right: 0; left: auto; z-index: 1050;">
                             <li class="border-bottom pb-2 mb-2 text-center">
                                 <h6 class="fw-bold mb-0 text-primary">
-                                    {{ Auth::user()->ho_ten ?? session('admin_name', 'Chưa cập nhật') }}
+                                    {{ Auth::user()->HoTen ?? session('admin_name', 'Chưa cập nhật') }}
                                 </h6>
                                 <small class="text-muted">
-                                    {{ Auth::user()->vai_tro ?? session('role', 'Chưa phân quyền') }}
+                                    {{ Auth::user()->VaiTro ?? session('role', 'Chưa phân quyền') }}
                                 </small>
                             </li>
                             
@@ -119,28 +119,28 @@
                             <li class="fs-7 mb-2 text-nowrap">
                                 <i class="bi bi-person-vcard text-primary me-2"></i>
                                 <strong>Mã QTV:</strong> 
-                                {{ Auth::user()->ma_quan_tri ?? Auth::user()->ma_quan_tri?? session('ma_quan_tri', 'N/A') }}
+                                {{ Auth::user()->MaQuanTri ?? Auth::user()->MaQuanTri ?? session('MaQuanTri', 'N/A') }}
                             </li>
 
                             <!-- Chức vụ -->
                             <li class="fs-7 mb-2 text-nowrap">
                                 <i class="bi bi-briefcase text-success me-2"></i>
                                 <strong>Chức vụ:</strong> 
-                                {{ Auth::user()->chuc_vu ?? session('chuc_vu', 'Chưa cập nhật') }}
+                                {{ Auth::user()->ChucVu ?? session('ChucVu', 'Chưa cập nhật') }}
                             </li>
 
                             <!-- Số điện thoại -->
                             <li class="fs-7 mb-2 text-nowrap">
                                 <i class="bi bi-telephone text-warning me-2"></i>
                                 <strong>SĐT:</strong> 
-                                {{ Auth::user()->so_dien_thoai ?? session('so_dien_thoai', 'Chưa cập nhật') }}
+                                {{ Auth::user()->SoDienThoai ?? session('SoDienThoai', 'Chưa cập nhật') }}
                             </li>
 
                             <!-- Email -->
                             <li class="fs-7 mb-2 text-nowrap">
                                 <i class="bi bi-envelope text-danger me-2"></i>
                                 <strong>Email:</strong> 
-                                {{ Auth::user()->email ?? session('email', 'Chưa cập nhật') }}
+                                {{ Auth::user()->Email ?? session('Email', 'Chưa cập nhật') }}
                             </li>
                             
                             <li><hr class="dropdown-divider"></li>

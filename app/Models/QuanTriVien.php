@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class QuanTriVien extends Model
 {
     protected $table = 'QuanTriVien';
-    protected $primaryKey = 'ma_quan_tri';
+    protected $primaryKey = 'MaQuanTri';
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['ma_quan_tri', 'ho_ten', 'email', 'so_dien_thoai', 'chuc_vu', 'ma_tai_khoan'];
+    protected $fillable = ['MaQuanTri', 'HoTen', 'Email', 'SoDienThoai', 'ChucVu', 'MaTaiKhoan'];
 
     public function taiKhoan()
     {
-        return $this->belongsTo(TaiKhoan::class, 'ma_tai_khoan', 'ma_tai_khoan');
+        return $this->belongsTo(TaiKhoan::class, 'MaTaiKhoan', 'MaTaiKhoan');
     }
 }

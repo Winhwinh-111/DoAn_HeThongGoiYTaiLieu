@@ -28,7 +28,7 @@ class RecommendationService
                 86400,
                 function () {
                     $item = CauHinhGoiY::orderByDesc('created_at')
-                        ->orderByDesc('ma_cau_hinh')
+                        ->orderByDesc('MaCauHinh')
                         ->first();
                     return $item ? $item->toArray() : null;
                 }
@@ -37,48 +37,48 @@ class RecommendationService
             // Kiểm tra nếu cache trả về incomplete class hoặc object cũ
             if (is_object($rawConfig)) {
                 Cache::forget('app_latest_config');
-                $item = CauHinhGoiY::orderByDesc('created_at')->orderByDesc('ma_cau_hinh')->first();
+                $item = CauHinhGoiY::orderByDesc('created_at')->orderByDesc('MaCauHinh')->first();
                 $configData = $item ? $item->toArray() : null;
             } else {
                 $configData = $rawConfig;
             }
         } catch (\Throwable $e) {
             $item = CauHinhGoiY::orderByDesc('created_at')
-                ->orderByDesc('ma_cau_hinh')
+                ->orderByDesc('MaCauHinh')
                 ->first();
             $configData = $item ? $item->toArray() : null;
         }
 
         // Lấy tham số động từ mảng cấu hình
-        $topN = $topN ?? (isset($configData['top_n']) ? (int)$configData['top_n'] : 10);
-        $minThreshold = $minThreshold ?? (isset($configData['nguong_cosine']) ? (float)$configData['nguong_cosine'] : 0.02);
+        $topN = $topN ?? (isset($configData['TopN']) ? (int)$configData['TopN'] : 10);
+        $minThreshold = $minThreshold ?? (isset($configData['NguongCosine']) ? (float)$configData['NguongCosine'] : 0.02);
 
         $student = SinhVien::with(['hocPhans' => function ($query) {
-            $query->whereIn('trang_thai', ['DangHoc', 'DaHoanThanh']);
+            $query->whereIn('TrangThai', ['DangHoc', 'DaHoanThanh']);
         }])->find($mssv);
 
         if (!$student) return [];
 
-        $maHocPhans = $student->hocPhans->pluck('ma_hoc_phan')->toArray();
+        $maHocPhans = $student->hocPhans->pluck('MaHocPhan')->toArray();
 
         // A. CHỈ GIỮ LẠI CÁC HỌC PHẦN HỢP LỆ (CÓ ĐỀ CƯƠNG)
         $validMaHocPhans = DB::table('DeCuongHocPhan')
-            ->whereIn('ma_hoc_phan', $maHocPhans)
+            ->whereIn('MaHocPhan', $maHocPhans)
             ->distinct()
-            ->pluck('ma_hoc_phan')
+            ->pluck('MaHocPhan')
             ->toArray();
 
         // B. TUÂN THỦ DỰ PHÒNG NGOẠI LỆ (COLD-START)
         if (empty($validMaHocPhans)) {
             $maHocPhansCTDT = DB::table('ChuongTrinhDaoTao')
-                ->where('ma_nganh', $student->ma_nganh)
-                ->pluck('ma_hoc_phan')
+                ->where('MaNganh', $student->MaNganh)
+                ->pluck('MaHocPhan')
                 ->toArray();
 
             $validMaHocPhans = DB::table('DeCuongHocPhan')
-                ->whereIn('ma_hoc_phan', $maHocPhansCTDT)
+                ->whereIn('MaHocPhan', $maHocPhansCTDT)
                 ->distinct()
-                ->pluck('ma_hoc_phan')
+                ->pluck('MaHocPhan')
                 ->toArray();
 
             // Nếu ngành không có học phần nào có đề cương hợp lệ -> Trả về rỗng
@@ -89,23 +89,23 @@ class RecommendationService
 
         $maHocPhans = $validMaHocPhans;
 
-        $nganh = DB::table('NganhHoc')->where('ma_nganh', $student->ma_nganh)->first();
-        $tenNganh = $nganh ? $nganh->ten_nganh : '';
+        $nganh = DB::table('NganhHoc')->where('MaNganh', $student->MaNganh)->first();
+        $tenNganh = $nganh ? $nganh->TenNganh : '';
 
         // Xây dựng tập văn bản Hồ sơ học tập
         $coursesText = [];
         $hocPhans = DB::table('HocPhan')
-            ->whereIn('ma_hoc_phan', $maHocPhans)
-            ->pluck('ten_hoc_phan', 'ma_hoc_phan');
+            ->whereIn('MaHocPhan', $maHocPhans)
+            ->pluck('TenHocPhan', 'MaHocPhan');
 
-        $deCuongs = DeCuongHocPhan::whereIn('ma_hoc_phan', $maHocPhans)->get();
+        $deCuongs = DeCuongHocPhan::whereIn('MaHocPhan', $maHocPhans)->get();
 
         foreach ($hocPhans as $maHp => $tenHp) {
             $coursesText['COURSE_' . $maHp] = $tenNganh . ' ' . $tenHp . ' ';
         }
 
         foreach ($deCuongs as $dc) {
-            $key = 'COURSE_' . $dc->ma_hoc_phan;
+            $key = 'COURSE_' . $dc->MaHocPhan;
             if (!isset($coursesText[$key])) {
                 $coursesText[$key] = $tenNganh . ' ';
             }
@@ -114,12 +114,12 @@ class RecommendationService
 
         // C. LOẠI TÀI LIỆU ĐÃ MƯỢN: Chỉ lọc các tài liệu sinh viên "Đang mượn" chưa trả
         $borrowedDocIds = DB::table('MuonTra')
-            ->where('mssv', $mssv)
-            ->where('trang_thai', 'DangMuon') 
-            ->pluck('ma_tai_lieu')
+            ->where('MSSV', $mssv)
+            ->where('TrangThai', 'DangMuon') 
+            ->pluck('MaTaiLieu')
             ->toArray();
 
-        $documents = TaiLieu::whereNotIn('ma_tai_lieu', $borrowedDocIds)->get();
+        $documents = TaiLieu::whereNotIn('MaTaiLieu', $borrowedDocIds)->get();
         if ($documents->isEmpty()) return [];
 
         $rawTextsToProcess = [];
@@ -132,8 +132,8 @@ class RecommendationService
         }
 
         foreach ($documents as $doc) {
-            $rawTextsToProcess[$doc->ma_tai_lieu] = $doc->nhan_de . ' ' . $doc->thuat_ngu_chu_de . ' ' . $doc->mo_ta;
-            $docIds[] = $doc->ma_tai_lieu;
+            $rawTextsToProcess[$doc->MaTaiLieu] = $doc->NhanDe . ' ' . $doc->ThuatNguChuDe . ' ' . $doc->MoTa;
+            $docIds[] = $doc->MaTaiLieu;
         }
 
         $corpus = $this->tokenizer->tokenizeBatch($rawTextsToProcess);
@@ -173,7 +173,7 @@ class RecommendationService
 
         $topDocIds = array_slice(array_keys($scores), 0, $topN);
 
-        $recommendedBooks = TaiLieu::whereIn('ma_tai_lieu', $topDocIds)->get()->keyBy('ma_tai_lieu');
+        $recommendedBooks = TaiLieu::whereIn('MaTaiLieu', $topDocIds)->get()->keyBy('MaTaiLieu');
 
         $result = [];
         foreach ($topDocIds as $id) {

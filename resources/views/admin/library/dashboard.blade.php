@@ -82,12 +82,12 @@
                     <tbody>
                         @forelse($recentBorrows as $b)
                             <tr>
-                                <td><strong class="text-danger">{{ $b->ma_giao_dich }}</strong></td>
-                                <td>{{ $b->sinhVien->ho_ten ?? $b->mssv }} ({{ $b->mssv }})</td>
-                                <td>{{ $b->taiLieu->nhan_de ?? $b->ma_tai_lieu }}</td>
-                                <td>{{ date('d/m/Y H:i', strtotime($b->ngay_muon)) }}</td>
+                                <td><strong class="text-danger">{{ $b->MaGiaoDich }}</strong></td>
+                                <td>{{ $b->sinhVien->HoTen ?? $b->MSSV }} ({{ $b->MSSV }})</td>
+                                <td>{{ $b->taiLieu->NhanDe ?? $b->MaTaiLieu }}</td>
+                                <td>{{ date('d/m/Y H:i', strtotime($b->NgayMuon)) }}</td>
                                 <td>
-                                    @if($b->trang_thai === 'DaTra')
+                                    @if($b->TrangThai === 'DaTra')
                                         <span class="badge bg-success">Đã trả</span>
                                     @else
                                         <span class="badge bg-warning text-dark">Đang mượn</span>
@@ -126,7 +126,7 @@
             <ul class="list-group list-group-flush fs-7 mt-2">
                 @forelse($topKeywords as $k)
                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <span><i class="bi bi-tag-fill me-2 text-secondary"></i>{{ $k->tu_khoa }}</span>
+                        <span><i class="bi bi-tag-fill me-2 text-secondary"></i>{{ $k->TuKhoa }}</span>
                         <span class="badge bg-primary rounded-pill">{{ $k->count }} lượt</span>
                     </li>
                 @empty

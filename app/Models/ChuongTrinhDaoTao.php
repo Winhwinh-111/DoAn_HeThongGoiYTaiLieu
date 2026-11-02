@@ -11,15 +11,15 @@ class ChuongTrinhDaoTao extends Model
     public $incrementing = false;
     public $timestamps = false;
 
-    protected $fillable = ['ma_nganh', 'ma_hoc_phan'];
+    protected $fillable = ['MaNganh', 'MaHocPhan'];
 
     public function nganh()
     {
-        return $this->belongsTo(NganhHoc::class, 'ma_nganh', 'ma_nganh');
+        return $this->belongsTo(NganhHoc::class, 'MaNganh', 'MaNganh');
     }
 
     public function hocPhan()
     {
-        return $this->belongsTo(HocPhan::class, 'ma_hoc_phan', 'ma_hoc_phan');
+        return $this->belongsTo(HocPhan::class, 'MaHocPhan', 'MaHocPhan');
     }
 }
